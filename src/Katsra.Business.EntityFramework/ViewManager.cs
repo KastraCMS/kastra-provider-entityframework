@@ -365,7 +365,7 @@ namespace Kastra.Business
         public ModuleInfo GetModule(Int32 moduleID, Boolean getModuleDef = false, Boolean getPlace = false)
         {
             KastraModules module = null;
-            IQueryable<KastraModules> query = _dbContext.KastraModules;
+            IQueryable<KastraModules> query = _dbContext.KastraModules.Include(m => m.KastraModulePermissions);
 
             if (getModuleDef)
                 query = query.Include(m => m.ModuleDef.KastraModuleControls);
@@ -378,7 +378,7 @@ namespace Kastra.Business
             if (module == null)
                 return null;
 
-            return ModuleMapper.ToModuleInfo(module);
+            return ModuleMapper.ToModuleInfo(module, true);
         }
 
         public IList<ModuleInfo> GetModulesList(Boolean getModuleDefs = false)
