@@ -56,5 +56,43 @@ namespace Kastra.Business
                 dependancyRegister.Uninstall();
             }
         }
+
+        /// <summary>
+        /// Installs the module.
+        /// </summary>
+        /// <param name="assembly">Assembly.</param>
+        public void InstallModule(Assembly assembly)
+        {
+            IModuleRegister dependancyRegister = null;
+            Type serviceType = typeof(IModuleRegister);
+
+            IEnumerable<Type> modulesToRegister = assembly.GetTypes()
+                                                    .Where(type => serviceType.IsAssignableFrom(type) && !type.GetTypeInfo().IsAbstract);
+
+            foreach (Type implementationType in modulesToRegister)
+            {
+                dependancyRegister = Activator.CreateInstance(implementationType) as IModuleRegister;
+                dependancyRegister.Install(_serviceProvider, _viewManager);
+            }
+        }
+
+        /// <summary>
+        /// Uninstalls the module.
+        /// </summary>
+        /// <param name="assembly">Assembly.</param>
+        public void UninstallModule(Assembly assembly)
+        {
+            IModuleRegister dependancyRegister = null;
+            Type serviceType = typeof(IModuleRegister);
+
+            IEnumerable<Type> modulesToRegister = assembly.GetTypes()
+                                                    .Where(type => serviceType.IsAssignableFrom(type) && !type.GetTypeInfo().IsAbstract);
+
+            foreach (Type implementationType in modulesToRegister)
+            {
+                dependancyRegister = Activator.CreateInstance(implementationType) as IModuleRegister;
+                dependancyRegister.Uninstall();
+            }
+        }
     }
 }

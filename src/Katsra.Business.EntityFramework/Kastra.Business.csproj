@@ -12,6 +12,6 @@
     <Folder Include="Mappers\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Kastra.Core" Version="0.8.6" />
+    <PackageReference Include="Kastra.Core" Version="0.8.8" />
   </ItemGroup>
 </Project>

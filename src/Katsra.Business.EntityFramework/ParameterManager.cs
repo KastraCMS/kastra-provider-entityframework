@@ -9,7 +9,6 @@ using Kastra.Core.Dto;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Kastra.Business
 {
