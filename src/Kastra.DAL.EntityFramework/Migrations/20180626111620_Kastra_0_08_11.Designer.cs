@@ -11,9 +11,10 @@ using System;
 namespace Kastra.DAL.EntityFramework.Migrations
 {
     [DbContext(typeof(KastraContext))]
-    partial class KastraContextModelSnapshot : ModelSnapshot
+    [Migration("20180626111620_Kastra_0_08_11")]
+    partial class Kastra_0_08_11
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

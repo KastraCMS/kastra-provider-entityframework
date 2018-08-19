@@ -10,7 +10,7 @@ namespace Kastra.DAL.EntityFramework
         public KastraContext CreateDbContext(string[] args)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()
-                .SetBasePath($"{Directory.GetCurrentDirectory()}/../Kastra.Web")
+                .SetBasePath($"{Directory.GetCurrentDirectory()}")
                 .AddJsonFile("appsettings.json")
                 .Build();
     

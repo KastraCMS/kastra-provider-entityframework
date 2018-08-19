@@ -14,6 +14,7 @@ namespace Kastra.DAL.EntityFramework
         public virtual DbSet<KastraParameters> KastraParameters { get; set; }
         public virtual DbSet<KastraPermissions> KastraPermissions { get; set; }
         public virtual DbSet<KastraPlaces> KastraPlaces { get; set; }
+        public virtual DbSet<KastraVisitors> KastraVisitors { get; set; }
 
         
         public KastraContext(DbContextOptions<KastraContext> options) : base(options)
@@ -22,6 +23,24 @@ namespace Kastra.DAL.EntityFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<KastraVisitors>(entity =>
+            {
+                entity.HasKey(e => e.Id)
+                    .HasName("PK_Kastra_Visitors");
+
+                entity.ToTable("Kastra_Visitors");
+
+                entity.Property(e => e.Id).HasColumnName("Id");
+
+                entity.Property(e => e.IpAddress).HasColumnName("IpAddress").HasMaxLength(45);
+
+                entity.Property(e => e.LastVisitAt).HasColumnName("LastVisitAt");
+
+                entity.Property(e => e.UserAgent).HasColumnName("UserAgent").HasMaxLength(256);
+
+                entity.Property(e => e.UserId).HasColumnName("UserId");
+            });
+
             modelBuilder.Entity<KastraModuleControls>(entity =>
             {
                 entity.HasKey(e => e.ModuleControlId)

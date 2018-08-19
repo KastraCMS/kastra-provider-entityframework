@@ -15,6 +15,7 @@ namespace Kastra.Business
             services.AddScoped<IParameterManager, ParameterManager>();
             services.AddScoped<IViewManager, ViewManager>();
             services.AddScoped<ISecurityManager, SecurityManager>();
+            services.AddScoped<IStatisticsManager, StatisticsManager>();
         }
     }
 }
