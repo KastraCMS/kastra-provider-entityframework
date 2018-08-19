@@ -458,6 +458,12 @@ namespace Kastra.Business
             if (module == null)
                 return false;
 
+            // Delete all permissions
+            foreach(KastraModulePermissions permission in module.KastraModulePermissions)
+            {
+                _dbContext.KastraModulePermissions.Remove(permission);
+            }
+
             _dbContext.KastraModules.Remove(module);
             _dbContext.SaveChanges();
 
