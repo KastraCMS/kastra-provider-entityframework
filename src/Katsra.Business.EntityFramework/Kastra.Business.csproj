@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <ReleaseVersion>0.8.11</ReleaseVersion>
+    <ReleaseVersion>0.9.3</ReleaseVersion>
+    <VersionPrefix>0.9.3</VersionPrefix>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
@@ -14,6 +15,6 @@
     <Folder Include="Mappers\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Kastra.Core" Version="0.8.12" />
+    <PackageReference Include="Kastra.Core" Version="0.9.3" />
   </ItemGroup>
 </Project>
