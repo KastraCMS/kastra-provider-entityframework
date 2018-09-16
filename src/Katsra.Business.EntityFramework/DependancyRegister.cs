@@ -1,5 +1,6 @@
 ﻿using Kastra.Core;
 using Kastra.Core.Business;
+using Kastra.Core.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ namespace Kastra.Business
             services.AddScoped<IViewManager, ViewManager>();
             services.AddScoped<ISecurityManager, SecurityManager>();
             services.AddScoped<IStatisticsManager, StatisticsManager>();
+            services.AddSingleton<IEmailSender, EmailSender>();
         }
     }
 }
