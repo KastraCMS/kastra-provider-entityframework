@@ -23,8 +23,8 @@ namespace Kastra.Business
             // Set smtp client
             _smtpClient = new SmtpClient
             {
-                Host = siteConfiguration.SmtpHost,
-                Port = siteConfiguration.SmtpPort,
+                Host = !String.IsNullOrEmpty(siteConfiguration.SmtpHost) ? siteConfiguration.SmtpHost : "localhost",
+                Port = siteConfiguration.SmtpPort > 0 ? siteConfiguration.SmtpPort : 587,
                 EnableSsl = siteConfiguration.SmtpEnableSsl
             };
 

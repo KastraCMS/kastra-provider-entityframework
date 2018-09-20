@@ -45,17 +45,26 @@ namespace Kastra.Business
 
 			parameters = _dbContext.KastraParameters.ToDictionary(p => p.Key, p => p.Value);
 
-			if (parameters == null || parameters.Count == 0)
-				return siteConfiguration;
-
 			foreach (PropertyInfo property in typeof(SiteConfigurationInfo).GetProperties())
 			{
-				obj = parameters[property.Name];
+                // Set default value if the value does not exist in database
+                if(parameters == null || !parameters.ContainsKey(property.Name))
+                {
+                    //Save parameter
+                    _dbContext.KastraParameters.Add(new KastraParameters() 
+                    { 
+                        Key = property.Name, 
+                        Value = property.GetValue(siteConfiguration)?.ToString() 
+                    });
 
-				if (String.IsNullOrEmpty(obj))
-					continue;
+                    _dbContext.SaveChanges();
 
-				typeConverter = TypeDescriptor.GetConverter(property.PropertyType);
+                    continue;
+                }
+
+                obj = parameters[property.Name];
+
+                typeConverter = TypeDescriptor.GetConverter(property.PropertyType);
 
 				if (typeConverter == null)
 					continue;

@@ -17,7 +17,7 @@ namespace Kastra.Business
             services.AddScoped<IViewManager, ViewManager>();
             services.AddScoped<ISecurityManager, SecurityManager>();
             services.AddScoped<IStatisticsManager, StatisticsManager>();
-            services.AddSingleton<IEmailSender, EmailSender>();
+            services.AddScoped<IEmailSender, EmailSender>();
         }
     }
 }
