@@ -5,33 +5,35 @@ using System.Threading.Tasks;
 using Kastra.Core.Business;
 using Kastra.Core.Dto;
 using Kastra.Core.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Kastra.Business
 {
     public class EmailSender : IEmailSender
     {
         private readonly SmtpClient _smtpClient;
-        private readonly IParameterManager _parameterManager;
+        private readonly ILogger _logger;
+        private readonly SiteConfigurationInfo _siteConfiguration;
 
-        public EmailSender(IParameterManager parameterManager)
+        public EmailSender(IParameterManager parameterManager, ILogger<EmailSender> logger)
         {
-            _parameterManager = parameterManager;
+            _logger = logger;
 
             // Get site configuration
-            SiteConfigurationInfo siteConfiguration = parameterManager.GetSiteConfiguration();
+            _siteConfiguration = parameterManager.GetSiteConfiguration();
 
             // Set smtp client
             _smtpClient = new SmtpClient
             {
-                Host = !String.IsNullOrEmpty(siteConfiguration.SmtpHost) ? siteConfiguration.SmtpHost : "localhost",
-                Port = siteConfiguration.SmtpPort > 0 ? siteConfiguration.SmtpPort : 587,
-                EnableSsl = siteConfiguration.SmtpEnableSsl
+                Host = !String.IsNullOrEmpty(_siteConfiguration.SmtpHost) ? _siteConfiguration.SmtpHost : "localhost",
+                Port = _siteConfiguration.SmtpPort > 0 ? _siteConfiguration.SmtpPort : 587,
+                EnableSsl = _siteConfiguration.SmtpEnableSsl
             };
 
-            if (!String.IsNullOrEmpty(siteConfiguration.SmtpCredentialsUser))
+            if (!String.IsNullOrEmpty(_siteConfiguration.SmtpCredentialsUser))
             {
-                _smtpClient.Credentials = new NetworkCredential(siteConfiguration.SmtpCredentialsUser, 
-                                                                siteConfiguration.SmtpCredentialsPassword);
+                _smtpClient.Credentials = new NetworkCredential(_siteConfiguration.SmtpCredentialsUser, 
+                                                                _siteConfiguration.SmtpCredentialsPassword);
             }
         }
 
@@ -43,14 +45,19 @@ namespace Kastra.Business
         /// <param name="message">Message.</param>
         public void SendEmail(string email, string subject, string message)
         {
-            SiteConfigurationInfo siteConfiguration = _parameterManager.GetSiteConfiguration();
-
-            using (MailMessage mailMessage = new MailMessage(siteConfiguration.EmailSender, email))
+            try
             {
-                mailMessage.Subject = subject;
-                mailMessage.Body = message;
+                using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
+                {
+                    mailMessage.Subject = subject;
+                    mailMessage.Body = message;
 
-                _smtpClient.Send(mailMessage);
+                    _smtpClient.Send(mailMessage);
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
             }
         }
 
@@ -63,14 +70,19 @@ namespace Kastra.Business
         /// <param name="message">Message.</param>
         public async Task SendEmailAsync(string email, string subject, string message)
         {
-            SiteConfigurationInfo siteConfiguration = _parameterManager.GetSiteConfiguration();
-
-            using (MailMessage mailMessage = new MailMessage(siteConfiguration.EmailSender, email))
+            try
             {
-                mailMessage.Subject = subject;
-                mailMessage.Body = message;
+                using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
+                {
+                    mailMessage.Subject = subject;
+                    mailMessage.Body = message;
 
-                await _smtpClient.SendMailAsync(mailMessage);
+                    await _smtpClient.SendMailAsync(mailMessage);
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
             }
         }
     }
