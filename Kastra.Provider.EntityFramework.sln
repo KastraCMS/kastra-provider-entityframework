@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2017
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kastra.DAL.EntityFramework", "src\Kastra.DAL.EntityFramework\Kastra.DAL.EntityFramework.csproj", "{9E048392-CA84-43A4-AA31-A8FB4CC0CD72}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kastra.Business", "src\Katsra.Business.EntityFramework\Kastra.Business.csproj", "{FD85B60F-2710-4539-9B82-342642AAA028}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kastra.Business", "src\Kastra.Business.EntityFramework\Kastra.Business.csproj", "{FD85B60F-2710-4539-9B82-342642AAA028}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
