@@ -22,6 +22,24 @@ namespace Kastra.Business
         {
             // Create database
             _dbContext.Database.Migrate();
+
+            // Set default parameters
+            KastraParameters theme = _dbContext.KastraParameters.SingleOrDefault(p => p.Key == "Theme");
+
+            if(theme == null)
+            {
+                theme = new KastraParameters();
+                theme.Key = "Theme";
+                theme.Value = "default";
+                _dbContext.Add(theme);
+            }
+            else
+            {
+                theme.Value = "default";
+                _dbContext.Update(theme);
+            } 
+
+            _dbContext.SaveChanges();
         }
 
         public void InstallDefaultPage()
