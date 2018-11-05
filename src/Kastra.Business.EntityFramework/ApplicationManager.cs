@@ -99,6 +99,39 @@ namespace Kastra.Business
             template.KastraPlaces.Add(place);
             
             _dbContext.KastraPageTemplates.Add(template);
+
+            // Add home template
+            KastraPageTemplates homeTemplate = _dbContext.KastraPageTemplates
+                                                .SingleOrDefault(t => t.KeyName == Constants.SiteConfig.DefaultPageTemplateKeyName);
+            
+            if(homeTemplate != null)
+                return;
+
+            homeTemplate = new KastraPageTemplates();
+            homeTemplate.KeyName = "HomeTemplate";
+            homeTemplate.Name = "Home template";
+            homeTemplate.Path = "Kastra.Web.Models.Template";
+
+            homeTemplate.KastraPlaces = new List<KastraPlaces>();
+
+            // Add places
+            place = new KastraPlaces();
+            place.KeyName = "Header";
+            
+            homeTemplate.KastraPlaces.Add(place);
+
+            place = new KastraPlaces();
+            place.KeyName = "Body";
+            
+            homeTemplate.KastraPlaces.Add(place);
+
+            place = new KastraPlaces();
+            place.KeyName = "Footer";
+            
+            homeTemplate.KastraPlaces.Add(place);
+            
+            _dbContext.KastraPageTemplates.Add(homeTemplate);
+
             _dbContext.SaveChanges();
         }
 
