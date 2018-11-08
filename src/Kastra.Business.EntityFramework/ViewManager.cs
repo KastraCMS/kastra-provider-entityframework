@@ -236,7 +236,7 @@ namespace Kastra.Business
         public IList<PlaceInfo> GetPlacesList(Boolean includeModules = false)
         {
             if (includeModules)
-                return _dbContext.KastraPlaces.Include(p => p.KastraModules).Select(p => PlaceMapper.ToPlaceInfo(p, false)).ToList();
+                return _dbContext.KastraPlaces.Include(p => p.KastraModules).Select(p => PlaceMapper.ToPlaceInfo(p, true)).ToList();
             else
                 return _dbContext.KastraPlaces.Select(p => PlaceMapper.ToPlaceInfo(p, false)).ToList();
 
