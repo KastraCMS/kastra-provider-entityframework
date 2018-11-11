@@ -14,6 +14,7 @@ namespace Kastra.Business.Mappers
 			placeInfo.PlaceId = place.PlaceId;
 			placeInfo.KeyName = place.KeyName;
 			placeInfo.PageTemplateId = place.PageTemplateId;
+			placeInfo.ModuleId = place.ModuleId;
 
             if(includeChildren)
 			    placeInfo.Modules = place.KastraModules.Select(m => ModuleMapper.ToModuleInfo(m, true))?.ToList();

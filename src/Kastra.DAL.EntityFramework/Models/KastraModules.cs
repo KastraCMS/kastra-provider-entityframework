@@ -18,5 +18,6 @@ namespace Kastra.DAL.EntityFramework.Models
         public virtual ICollection<KastraModulePermissions> KastraModulePermissions { get; set; }
         public virtual KastraModuleDefinitions ModuleDef { get; set; }
         public virtual KastraPlaces Place { get; set; }
+        public virtual KastraPlaces StaticPlace { get; set; }
     }
 }

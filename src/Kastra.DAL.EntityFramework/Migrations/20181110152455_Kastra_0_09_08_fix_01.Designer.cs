@@ -4,14 +4,16 @@ using Kastra.DAL.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Kastra.DAL.EntityFramework.Migrations
 {
     [DbContext(typeof(KastraContext))]
-    partial class KastraContextModelSnapshot : ModelSnapshot
+    [Migration("20181110152455_Kastra_0_09_08_fix_01")]
+    partial class Kastra_0_09_08_fix_01
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

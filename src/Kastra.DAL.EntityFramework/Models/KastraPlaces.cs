@@ -13,8 +13,10 @@ namespace Kastra.DAL.EntityFramework.Models
         public int PlaceId { get; set; }
         public int PageTemplateId { get; set; }
         public string KeyName { get; set; }
+        public int? ModuleId { get; set; }
 
         public virtual ICollection<KastraModules> KastraModules { get; set; }
         public virtual KastraPageTemplates PageTemplate { get; set; }
+        public virtual KastraModules StaticKastraModule { get; set; }
     }
 }

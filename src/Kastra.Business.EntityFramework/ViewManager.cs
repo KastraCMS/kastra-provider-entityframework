@@ -90,7 +90,17 @@ namespace Kastra.Business
                 pageInfo = PageMapper.ToPageInfo(page, true);
 
                 foreach (var place in pageInfo.PageTemplate.Places)
-                    place.Modules = GetModulesList(true);
+                {
+                    if(place.ModuleId.HasValue)
+                    {
+                        place.StaticModule = GetModule(place.ModuleId.Value, true, false);
+                    }
+                    else
+                    {
+                        place.Modules = GetModulesList(true);
+                    }
+                }
+                    
             }
             else
             {
@@ -127,7 +137,17 @@ namespace Kastra.Business
                 pageInfo = PageMapper.ToPageInfo(page, true);
 
                 foreach (var place in pageInfo.PageTemplate.Places)
-                    place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
+                {
+                    if(place.ModuleId.HasValue)
+                    {
+                        place.StaticModule = GetModule(place.ModuleId.Value, true, false);
+                    }
+                    else
+                    {
+                        place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
+                    }
+                }
+                    
             }
             else
             {
@@ -254,17 +274,24 @@ namespace Kastra.Business
 
         public Boolean SavePlace(PlaceInfo place)
         {
-            KastraPlaces newPlace = null;
-
             if (place == null)
                 return false;
 
-            newPlace = PlaceMapper.ToKastraPlace(place);
+            KastraPlaces currentPlace = _dbContext.KastraPlaces.SingleOrDefault(p => p.PlaceId == place.PlaceId);
 
-            if (place.PlaceId > 0)
-                _dbContext.KastraPlaces.Update(newPlace);
+            if (currentPlace != null)
+            {
+                currentPlace.KeyName = place.KeyName;
+                currentPlace.PageTemplateId = place.PageTemplateId;
+                currentPlace.PlaceId = place.PlaceId;
+                currentPlace.ModuleId = place.ModuleId;
+
+                _dbContext.KastraPlaces.Update(currentPlace);
+            }
             else
-                _dbContext.KastraPlaces.Add(newPlace);
+            {
+                _dbContext.KastraPlaces.Add(PlaceMapper.ToKastraPlace(place));
+            }
 
             _dbContext.SaveChanges();
 
@@ -365,7 +392,8 @@ namespace Kastra.Business
         public ModuleInfo GetModule(Int32 moduleID, Boolean getModuleDef = false, Boolean getPlace = false)
         {
             KastraModules module = null;
-            IQueryable<KastraModules> query = _dbContext.KastraModules.Include(m => m.KastraModulePermissions);
+            IQueryable<KastraModules> query = _dbContext.KastraModules.Include(m => m.KastraModulePermissions)
+                                                                        .ThenInclude(m => m.Permission);
 
             if (getModuleDef)
                 query = query.Include(m => m.ModuleDef.KastraModuleControls);

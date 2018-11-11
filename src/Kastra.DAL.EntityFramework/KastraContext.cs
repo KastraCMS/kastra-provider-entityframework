@@ -144,6 +144,11 @@ namespace Kastra.DAL.EntityFramework
                     .WithMany(p => p.KastraModules)
                     .HasForeignKey(d => d.PlaceId)
                     .HasConstraintName("FK_Kastra_Modules_Kastra_Places");
+
+                entity.HasOne(d => d.StaticPlace)
+                    .WithOne(p => p.StaticKastraModule)
+                    .HasForeignKey<KastraPlaces>(p => p.ModuleId)
+                    .IsRequired(false);
             });
 
             modelBuilder.Entity<KastraPageTemplates>(entity =>
@@ -213,7 +218,7 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.Name).HasMaxLength(150);
 
-                entity.Property(e => e.Value).HasMaxLength(50);
+                entity.Property(e => e.Value).HasMaxLength(150);
             });
 
             modelBuilder.Entity<KastraPermissions>(entity =>
@@ -249,6 +254,8 @@ namespace Kastra.DAL.EntityFramework
                     .WithMany(p => p.KastraPlaces)
                     .HasForeignKey(d => d.PageTemplateId)
                     .HasConstraintName("FK_Kastra_Places_Kastra_Page_Templates");
+
+                entity.Property(e => e.ModuleId);
             });
         }
     }

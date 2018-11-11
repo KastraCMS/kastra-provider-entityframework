@@ -4,14 +4,16 @@ using Kastra.DAL.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Kastra.DAL.EntityFramework.Migrations
 {
     [DbContext(typeof(KastraContext))]
-    partial class KastraContextModelSnapshot : ModelSnapshot
+    [Migration("20181109235125_Kastra_0_09_08")]
+    partial class Kastra_0_09_08
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,7 +203,7 @@ namespace Kastra.DAL.EntityFramework.Migrations
                         .HasMaxLength(150);
 
                     b.Property<string>("Value")
-                        .HasMaxLength(150);
+                        .HasMaxLength(50);
 
                     b.HasKey("ParameterId")
                         .HasName("PK_Kastra_Parameters");

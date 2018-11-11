@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-    <ReleaseVersion>0.9.7</ReleaseVersion>
-    <VersionPrefix>0.9.7</VersionPrefix>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <ReleaseVersion>0.9.8</ReleaseVersion>
+    <VersionPrefix>0.9.8</VersionPrefix>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
@@ -15,6 +15,7 @@
     <Folder Include="Mappers\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Kastra.Core" Version="0.9.7" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.1.5" />
+    <PackageReference Include="Kastra.Core" Version="0.9.8" />
   </ItemGroup>
 </Project>
