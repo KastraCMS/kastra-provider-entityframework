@@ -14,6 +14,7 @@ namespace Kastra.DAL.EntityFramework.Models
         public int PlaceId { get; set; }
         public int PageId { get; set; }
         public string Name { get; set; }
+        public bool IsDisabled { get; set; }
 
         public virtual ICollection<KastraModulePermissions> KastraModulePermissions { get; set; }
         public virtual KastraModuleDefinitions ModuleDef { get; set; }

@@ -16,6 +16,7 @@ namespace Kastra.Business.Mappers
 			moduleInfo.PageId = module.PageId;
 			moduleInfo.PlaceId = module.PlaceId;
 			moduleInfo.ModuleDefId = module.ModuleDefId;
+			moduleInfo.IsDisabled = module.IsDisabled;
 
             if(module.ModuleDef != null)
 			    moduleInfo.ModuleDefinition = ModuleDefinitionMapper.ToModuleDefinitionInfo(module.ModuleDef, false, true);
@@ -37,6 +38,7 @@ namespace Kastra.Business.Mappers
 			module.PageId = moduleInfo.PageId;
 			module.PlaceId = moduleInfo.PlaceId;
 			module.Name = moduleInfo.Name;
+			module.IsDisabled = moduleInfo.IsDisabled;
 
 			return module;
 		}

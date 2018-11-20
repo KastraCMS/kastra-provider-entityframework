@@ -95,10 +95,8 @@ namespace Kastra.Business
                     {
                         place.StaticModule = GetModule(place.ModuleId.Value, true, false);
                     }
-                    else
-                    {
-                        place.Modules = GetModulesList(true);
-                    }
+                    
+                    place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
                 }
                     
             }
@@ -142,10 +140,8 @@ namespace Kastra.Business
                     {
                         place.StaticModule = GetModule(place.ModuleId.Value, true, false);
                     }
-                    else
-                    {
-                        place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
-                    }
+
+                    place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
                 }
                     
             }
@@ -472,6 +468,7 @@ namespace Kastra.Business
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
+            _cacheEngine.ClearCacheContains(String.Format(Constants.PageConfig.PageByKeyCacheKey, String.Empty));
 
             return true;
         }
@@ -497,6 +494,7 @@ namespace Kastra.Business
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
+            _cacheEngine.ClearCacheContains(String.Format(Constants.PageConfig.PageByKeyCacheKey, String.Empty));
 
             return true;
         }

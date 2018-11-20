@@ -135,6 +135,8 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.PlaceId).HasColumnName("PlaceID");
 
+                entity.Property(e => e.IsDisabled).HasColumnName("IsDisabled");
+
                 entity.HasOne(d => d.ModuleDef)
                     .WithMany(p => p.KastraModules)
                     .HasForeignKey(d => d.ModuleDefId)
