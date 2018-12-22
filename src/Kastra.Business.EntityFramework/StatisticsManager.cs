@@ -29,24 +29,47 @@ namespace Kastra.Business
 
         public bool SaveVisitor(VisitorInfo visitorInfo)
         {
-            Dictionary<string, DateTime> recentVisitors = null;
+            bool isLoggedIn = !String.IsNullOrEmpty(visitorInfo.UserId);
+            string ipAddress = visitorInfo.IpAddress;
+            Dictionary<string, bool> recentVisitors = null;
 
-            if (_cacheEngine.GetCacheObject<Dictionary<string, DateTime>>(VISITS_KEY, out recentVisitors))
+            if (_cacheEngine.GetCacheObject<Dictionary<string, bool>>(VISITS_KEY, out recentVisitors))
             {
-                if (recentVisitors.ContainsKey(visitorInfo.IpAddress))
+                // If visitor exists in cache
+                if (recentVisitors.ContainsKey(ipAddress))
                 {
+                    if(isLoggedIn && !recentVisitors[ipAddress])
+                    {
+                        // Update in cache
+                        recentVisitors[ipAddress] = isLoggedIn;
+
+                        // Update existing visit
+                        DateTime startDate = DateTime.UtcNow.Subtract(_cacheEngine.CacheOptions.SlidingExpiration ?? new TimeSpan());
+                        KastraVisitors visit = _dbContext.KastraVisitors.Where(v => v.LastVisitAt >= startDate && v.LastVisitAt <= DateTime.UtcNow)
+                                                .SingleOrDefault(v => v.IpAddress == ipAddress);
+
+                        if (visit == null)
+                        {
+                            return false;
+                        }
+
+                        visit.UserId = visit.UserId;
+                        _dbContext.KastraVisitors.Update(visit);
+                        _dbContext.SaveChanges();
+                    }
+
                     return false;
                 }
                 else 
                 {
-                    recentVisitors.Add(visitorInfo.IpAddress, DateTime.UtcNow);
+                    recentVisitors.Add(visitorInfo.IpAddress, isLoggedIn);
                 }
             }
             else
             {
-                recentVisitors = new Dictionary<string, DateTime>();
-                recentVisitors.Add(visitorInfo.IpAddress, DateTime.UtcNow);
-                _cacheEngine.SetCacheObject<Dictionary<string, DateTime>>(VISITS_KEY, recentVisitors);
+                recentVisitors = new Dictionary<string, bool>();
+                recentVisitors.Add(visitorInfo.IpAddress, isLoggedIn);
+                _cacheEngine.SetCacheObject<Dictionary<string, bool>>(VISITS_KEY, recentVisitors);
             }
 
             // Save visit in database
