@@ -14,7 +14,8 @@ namespace Kastra.DAL.EntityFramework.Models
         public int PageTemplateId { get; set; }
         public string KeyName { get; set; }
         public string Name { get; set; }
-        public string Path { get; set; }
+        public string ViewPath { get; set; }
+        public string ModelClass { get; set; }
 
         public virtual ICollection<KastraPages> KastraPages { get; set; }
         public virtual ICollection<KastraPlaces> KastraPlaces { get; set; }

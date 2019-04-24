@@ -14,7 +14,8 @@ namespace Kastra.Business.Mappers
 			templateInfo.TemplateId = template.PageTemplateId;
 			templateInfo.KeyName = template.KeyName;
 			templateInfo.Name = template.Name;
-			templateInfo.Path = template.Path;
+			templateInfo.ModelClass = template.ModelClass;
+			templateInfo.ViewPath = template.ViewPath;
 
             if(includeChildren)
             {
@@ -31,7 +32,8 @@ namespace Kastra.Business.Mappers
 			template.PageTemplateId = templateInfo.TemplateId;
 			template.KeyName = templateInfo.KeyName;
 			template.Name = templateInfo.Name;
-			template.Path = templateInfo.Path;
+			template.ModelClass = templateInfo.ModelClass;
+			template.ViewPath = templateInfo.ViewPath;
 
 			return template;
 		}

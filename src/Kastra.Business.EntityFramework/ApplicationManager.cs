@@ -78,7 +78,7 @@ namespace Kastra.Business
             template = new KastraPageTemplates();
             template.KeyName = Constants.SiteConfig.DefaultPageTemplateKeyName;
             template.Name = "Default template";
-            template.Path = "Kastra.Web.Models.Template";
+            template.ModelClass = "Kastra.Web.Models.Template.DefaultTemplateViewModel";
 
             template.KastraPlaces = new List<KastraPlaces>();
 
@@ -110,7 +110,7 @@ namespace Kastra.Business
             homeTemplate = new KastraPageTemplates();
             homeTemplate.KeyName = "HomeTemplate";
             homeTemplate.Name = "Home template";
-            homeTemplate.Path = "Kastra.Web.Models.Template";
+            homeTemplate.ModelClass = "Kastra.Web.Models.Template.HomeTemplateViewModel";
 
             homeTemplate.KastraPlaces = new List<KastraPlaces>();
 

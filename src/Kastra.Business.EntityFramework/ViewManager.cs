@@ -211,7 +211,6 @@ namespace Kastra.Business
                 return false;
 
             newTemplate = TemplateMapper.ToKastraPageTemplate(template);
-            //Mettre valeur par défaut path 
 
             if (template.TemplateId > 0)
                 _dbContext.KastraPageTemplates.Update(newTemplate);

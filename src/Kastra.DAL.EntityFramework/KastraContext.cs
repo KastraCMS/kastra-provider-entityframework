@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Kastra.DAL.EntityFramework.Models;
+using System;
 
 namespace Kastra.DAL.EntityFramework
 {
@@ -170,7 +171,11 @@ namespace Kastra.DAL.EntityFramework
                     .IsRequired()
                     .HasMaxLength(150);
 
-                entity.Property(e => e.Path)
+                entity.Property(e => e.ModelClass)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.ViewPath)
                     .IsRequired()
                     .HasMaxLength(200);
             });
@@ -258,6 +263,25 @@ namespace Kastra.DAL.EntityFramework
                     .HasConstraintName("FK_Kastra_Places_Kastra_Page_Templates");
 
                 entity.Property(e => e.ModuleId);
+            });
+
+            modelBuilder.Entity<KastraFiles>(entity => {
+                entity.HasKey(e => e.FileId)
+                    .HasName("PK_Kastra_Files");
+
+                entity.ToTable("Kastra_Files");
+
+                entity.Property(e => e.FileId)
+                    .HasColumnName("FileID");
+
+                entity.Property(e => e.Name)
+                    .HasMaxLength(150);
+
+                entity.Property(e => e.Path)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.DateCreated)
+                    .HasDefaultValue(DateTime.Now);
             });
         }
     }
