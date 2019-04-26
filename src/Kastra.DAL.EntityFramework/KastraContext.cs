@@ -16,6 +16,7 @@ namespace Kastra.DAL.EntityFramework
         public virtual DbSet<KastraPermissions> KastraPermissions { get; set; }
         public virtual DbSet<KastraPlaces> KastraPlaces { get; set; }
         public virtual DbSet<KastraVisitors> KastraVisitors { get; set; }
+        public virtual DbSet<KastraFiles> KastraFiles { get; set; }
 
         
         public KastraContext(DbContextOptions<KastraContext> options) : base(options)
