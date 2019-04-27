@@ -36,15 +36,11 @@ namespace Kastra.Business
                 throw new ArgumentException($"{nameof(file.FileId)} already exists");
             }
 
+            // Generate new file id
             file.FileId = Guid.NewGuid();
-            StringBuilder sb = new StringBuilder();
-            sb.Append(_appSettings.Configuration.FileDirectoryPath.TrimEnd(Path.DirectorySeparatorChar);
-            sb.Append(Path.DirectorySeparatorChar);
-            sb.Append(file.Path.Replace("..", String.Empty));
-            sb.Append(Path.DirectorySeparatorChar);
-            sb.Append($"{file.FileId}_{file.Name}");
 
-            string filePath = sb.ToString();
+            // Get file path
+            string filePath = GetFilePath(file);
             
             try
             {
@@ -85,7 +81,19 @@ namespace Kastra.Business
 
         public void DownloadFileByGuid(Guid fileId)
         {
-            throw new NotImplementedException();
+            if (fileId == null)
+            {
+                throw new ArgumentNullException(nameof(fileId));
+            }
+
+            Core.Dto.FileInfo file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId)?.ToFileInfo();
+
+            if (file == null)
+            {
+                throw new Exception($"{nameof(fileId)} not found");
+            }
+
+            //return File.ReadAllBytes(GetFilePath(file);
         }
 
         public Core.Dto.FileInfo GetFile(Guid fileId)
@@ -97,7 +105,7 @@ namespace Kastra.Business
 
             KastraFiles file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
 
-            return file.ToFileInfo();
+            return file?.ToFileInfo();
         }
 
         public IList<Core.Dto.FileInfo> GetFilesByPath(string path)
@@ -124,5 +132,26 @@ namespace Kastra.Business
 
             return filesInfo;
         }
+
+        #region Private methods
+
+        /// <summary>
+        /// Get the file path of file
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        protected string GetFilePath(Core.Dto.FileInfo file)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(_appSettings.Configuration.FileDirectoryPath.TrimEnd(Path.DirectorySeparatorChar));
+            sb.Append(Path.DirectorySeparatorChar);
+            sb.Append(file.Path.Replace("..", String.Empty));
+            sb.Append(Path.DirectorySeparatorChar);
+            sb.Append($"{file.FileId}_{file.Name}");
+
+            return sb.ToString();
+        }
+
+        #endregion
     }
 }
