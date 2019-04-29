@@ -79,7 +79,7 @@ namespace Kastra.Business
             _dbContext.KastraFiles.Remove(file);
         }
 
-        public void DownloadFileByGuid(Guid fileId)
+        public byte[] DownloadFileByGuid(Guid fileId)
         {
             if (fileId == null)
             {
@@ -93,7 +93,7 @@ namespace Kastra.Business
                 throw new Exception($"{nameof(fileId)} not found");
             }
 
-            //return File.ReadAllBytes(GetFilePath(file);
+            return File.ReadAllBytes(GetFilePath(file));
         }
 
         public Core.Dto.FileInfo GetFile(Guid fileId)
