@@ -203,21 +203,36 @@ namespace Kastra.Business
             return TemplateMapper.ToTemplateInfo(template);
         }
 
-        public Boolean SavePageTemplate(TemplateInfo template)
+        public Boolean SavePageTemplate(TemplateInfo templateInfo)
         {
-            KastraPageTemplates newTemplate = null;
+            KastraPageTemplates template = null;
 
-            if (template == null)
+            if (templateInfo == null)
                 return false;
 
-            newTemplate = TemplateMapper.ToKastraPageTemplate(template);
+            if (templateInfo.TemplateId > 0)
+            {
+                template = _dbContext.KastraPageTemplates.SingleOrDefault(pt => pt.PageTemplateId == templateInfo.TemplateId);
+            }
 
-            if (template.TemplateId > 0)
-                _dbContext.KastraPageTemplates.Update(newTemplate);
+            if (template == null)
+            {
+                template = new KastraPageTemplates();
+            }
+
+            template.Name = templateInfo.Name;
+            template.KeyName = templateInfo.KeyName;
+            template.ModelClass = templateInfo.ModelClass;
+            template.ViewPath = templateInfo.ViewPath;
+
+            if (templateInfo.TemplateId > 0)
+                _dbContext.KastraPageTemplates.Update(template);
             else
-                _dbContext.KastraPageTemplates.Add(newTemplate);
+                _dbContext.KastraPageTemplates.Add(template);
 
             _dbContext.SaveChanges();
+
+            templateInfo.TemplateId = template.PageTemplateId;
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Template");
