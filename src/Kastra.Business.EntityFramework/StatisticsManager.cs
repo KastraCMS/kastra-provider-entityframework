@@ -29,6 +29,11 @@ namespace Kastra.Business
 
         public bool SaveVisitor(VisitorInfo visitorInfo)
         {
+            if (visitorInfo == null)
+            {
+                throw new ArgumentNullException(nameof(visitorInfo));
+            }
+
             bool isLoggedIn = !String.IsNullOrEmpty(visitorInfo.UserId);
             string ipAddress = visitorInfo.IpAddress;
             Dictionary<string, bool> recentVisitors = null;
