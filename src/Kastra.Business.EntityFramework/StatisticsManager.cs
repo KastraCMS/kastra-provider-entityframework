@@ -49,7 +49,7 @@ namespace Kastra.Business
                         recentVisitors[ipAddress] = isLoggedIn;
 
                         // Update existing visit
-                        DateTime startDate = DateTime.UtcNow.Subtract(_cacheEngine.CacheOptions.SlidingExpiration ?? new TimeSpan());
+                        DateTime startDate = DateTime.UtcNow.Subtract(_cacheEngine.CacheOptions?.SlidingExpiration ?? new TimeSpan());
                         KastraVisitors visit = _dbContext.KastraVisitors.Where(v => v.LastVisitAt >= startDate && v.LastVisitAt <= DateTime.UtcNow)
                                                 .SingleOrDefault(v => v.IpAddress == ipAddress);
 
@@ -61,6 +61,8 @@ namespace Kastra.Business
                         visit.UserId = visit.UserId;
                         _dbContext.KastraVisitors.Update(visit);
                         _dbContext.SaveChanges();
+
+                        return true;
                     }
 
                     return false;
