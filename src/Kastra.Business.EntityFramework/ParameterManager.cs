@@ -86,7 +86,12 @@ namespace Kastra.Business
 
 			foreach (PropertyInfo property in typeof(SiteConfigurationInfo).GetProperties())
 			{
-				if (parameters == null || (parameter = parameters.SingleOrDefault(p => p.Key == property.Name)) == null)
+				if (parameters != null)
+				{
+					parameter = parameters.SingleOrDefault(p => p.Key == property.Name);
+				}
+				
+				if (parameters == null || parameter == null)
 				{
 					parameter = new KastraParameters();
 					parameter.Key = property.Name;

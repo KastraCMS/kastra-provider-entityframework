@@ -226,7 +226,7 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.Name).HasMaxLength(150);
 
-                entity.Property(e => e.Value).HasMaxLength(150);
+                entity.Property(e => e.Value).HasMaxLength(1000);
             });
 
             modelBuilder.Entity<KastraPermissions>(entity =>
@@ -282,7 +282,7 @@ namespace Kastra.DAL.EntityFramework
                     .HasMaxLength(500);
 
                 entity.Property(e => e.DateCreated)
-                    .HasDefaultValue(DateTime.Now);
+                    .HasDefaultValueSql("getdate()");
             });
         }
     }
