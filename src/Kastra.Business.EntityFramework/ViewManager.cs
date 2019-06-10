@@ -48,6 +48,22 @@ namespace Kastra.Business
 
             if(currentPage != null)
             {
+                if (currentPage.PageTemplateId != page.PageTemplateId)
+                {
+                    // Get the modules of the page
+                    List<KastraModules> modules = _dbContext.KastraModules
+                                                    .Where(m => m.PageId == currentPage.PageId)
+                                                    .ToList();
+
+                    // Remove 
+                    foreach (KastraModules module in modules)
+                    {
+                        module.IsDisabled = true;
+                    }
+                    
+                    _cacheEngine.ClearCacheContains("Module");
+                }
+
                 currentPage.KeyName = page.KeyName;
                 currentPage.MetaDescription = page.MetaDescription;
                 currentPage.MetaKeywords = page.MetaKeywords;
