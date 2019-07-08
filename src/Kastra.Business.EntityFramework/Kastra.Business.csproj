@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <ReleaseVersion>0.9.15</ReleaseVersion>
-    <VersionPrefix>0.9.15</VersionPrefix>
+    <ReleaseVersion>0.9.16</ReleaseVersion>
+    <VersionPrefix>0.9.16</VersionPrefix>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
@@ -16,6 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.1.10" />
-    <PackageReference Include="Kastra.Core" Version="0.9.15" />
+    <PackageReference Include="Kastra.Core" Version="0.9.16" />
   </ItemGroup>
 </Project>
