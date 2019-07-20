@@ -45,19 +45,12 @@ namespace Kastra.Business
         /// <param name="message">Message.</param>
         public void SendEmail(string email, string subject, string message)
         {
-            try
+            using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
             {
-                using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
-                {
-                    mailMessage.Subject = subject;
-                    mailMessage.Body = message;
+                mailMessage.Subject = subject;
+                mailMessage.Body = message;
 
-                    _smtpClient.Send(mailMessage);
-                }
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex.Message);
+                _smtpClient.Send(mailMessage);
             }
         }
 
@@ -70,19 +63,12 @@ namespace Kastra.Business
         /// <param name="message">Message.</param>
         public async Task SendEmailAsync(string email, string subject, string message)
         {
-            try
+            using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
             {
-                using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
-                {
-                    mailMessage.Subject = subject;
-                    mailMessage.Body = message;
+                mailMessage.Subject = subject;
+                mailMessage.Body = message;
 
-                    await _smtpClient.SendMailAsync(mailMessage);
-                }
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex.Message);
+                await _smtpClient.SendMailAsync(mailMessage);
             }
         }
     }
