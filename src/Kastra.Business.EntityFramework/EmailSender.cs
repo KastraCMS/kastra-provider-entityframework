@@ -12,13 +12,10 @@ namespace Kastra.Business
     public class EmailSender : IEmailSender
     {
         private readonly SmtpClient _smtpClient;
-        private readonly ILogger _logger;
         private readonly SiteConfigurationInfo _siteConfiguration;
 
         public EmailSender(IParameterManager parameterManager, ILogger<EmailSender> logger)
         {
-            _logger = logger;
-
             // Get site configuration
             _siteConfiguration = parameterManager.GetSiteConfiguration();
 
