@@ -46,7 +46,8 @@ namespace Kastra.Business
             {
                 mailMessage.Subject = subject;
                 mailMessage.Body = message;
-
+                mailMessage.IsBodyHtml = true;
+                
                 _smtpClient.Send(mailMessage);
             }
         }
@@ -64,6 +65,7 @@ namespace Kastra.Business
             {
                 mailMessage.Subject = subject;
                 mailMessage.Body = message;
+                mailMessage.IsBodyHtml = true;
 
                 await _smtpClient.SendMailAsync(mailMessage);
             }
