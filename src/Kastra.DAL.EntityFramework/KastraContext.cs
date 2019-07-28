@@ -6,6 +6,7 @@ namespace Kastra.DAL.EntityFramework
 {
     public class KastraContext : DbContext
     {
+        public virtual DbSet<KastraMailTemplate> KastraMailTemplates { get; set; }
         public virtual DbSet<KastraModuleControls> KastraModuleControls { get; set; }
         public virtual DbSet<KastraModuleDefinitions> KastraModuleDefinitions { get; set; }
         public virtual DbSet<KastraModulePermissions> KastraModulePermissions { get; set; }
@@ -283,6 +284,24 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.DateCreated)
                     .HasDefaultValueSql("getdate()");
+            });
+
+            modelBuilder.Entity<KastraMailTemplate>(entity =>
+            {
+                entity.HasKey(e => e.MailTemplateId)
+                    .HasName("PK_Kastra_Mail_Templates");
+
+                entity.ToTable("Kastra_Mail_Templates");
+
+                entity.Property(e => e.Keyname)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                entity.Property(e => e.Subject)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Message);
             });
         }
     }

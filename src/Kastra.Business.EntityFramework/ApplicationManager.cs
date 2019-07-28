@@ -23,23 +23,9 @@ namespace Kastra.Business
             // Create database
             _dbContext.Database.Migrate();
 
-            // Set default parameters
-            KastraParameters theme = _dbContext.KastraParameters.SingleOrDefault(p => p.Key == "Theme");
+            InstallDefaultParameters();
 
-            if(theme == null)
-            {
-                theme = new KastraParameters();
-                theme.Key = "Theme";
-                theme.Value = "default";
-                _dbContext.Add(theme);
-            }
-            else
-            {
-                theme.Value = "default";
-                _dbContext.Update(theme);
-            } 
-
-            _dbContext.SaveChanges();
+            InstallDefaultMailTemplates();
         }
 
         public void InstallDefaultPage()
@@ -151,6 +137,61 @@ namespace Kastra.Business
             permission = new KastraPermissions();
             permission.Name = Constants.ModuleConfig.EditPermission;
             _dbContext.KastraPermissions.Add(permission);
+
+            _dbContext.SaveChanges();
+        }
+
+        public void InstallDefaultParameters()
+        {
+            KastraParameters theme = _dbContext.KastraParameters.SingleOrDefault(p => p.Key == "Theme");
+
+            if(theme == null)
+            {
+                theme = new KastraParameters();
+                theme.Key = "Theme";
+                theme.Value = "default";
+                _dbContext.Add(theme);
+            }
+            else
+            {
+                theme.Value = "default";
+                _dbContext.Update(theme);
+            }
+
+            _dbContext.SaveChanges();
+        }
+
+        public void InstallDefaultMailTemplates()
+        {
+            if (_dbContext.KastraMailTemplates.Any())
+            {
+                return;
+            }
+
+            KastraMailTemplate mailTemplate = null;
+            List<KastraMailTemplate> mailTemplates = new List<KastraMailTemplate>();
+
+            if (!_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == "account.confirmregistration"))
+            {
+                mailTemplate = new KastraMailTemplate() {
+                    Keyname = "account.confirmregistration",
+                    Subject = "Confirm your account",
+                    Message = "Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>"
+                };
+
+                mailTemplates.Add(mailTemplate);
+            }
+            
+            if (!_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == "account.resetpassword"))
+            {
+                mailTemplate = new KastraMailTemplate() {
+                    Keyname = "account.resetpassword",
+                    Subject = "Reset Password",
+                    Message = "Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>"
+                };
+
+                mailTemplates.Add(mailTemplate);
+            }
 
             _dbContext.SaveChanges();
         }
