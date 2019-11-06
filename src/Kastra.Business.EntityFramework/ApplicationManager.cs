@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kastra.Core;
 using Kastra.Core.Business;
+using Kastra.Core.Constants;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +10,7 @@ namespace Kastra.Business
 {
     public class ApplicationManager : IApplicationManager
     {
-        private readonly KastraContext _dbContext = null;
+        private readonly KastraContext _dbContext;
 
         public ApplicationManager(KastraContext dbContext)
         {
@@ -32,7 +31,7 @@ namespace Kastra.Business
         {
             KastraPages home = _dbContext.KastraPages.SingleOrDefault(p => p.KeyName.ToLower() == "home");
             KastraPageTemplates template = _dbContext.KastraPageTemplates
-                                                .SingleOrDefault(t => t.KeyName == Constants.SiteConfig.DefaultPageTemplateKeyName);
+                                                .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
 
             if(home == null && template != null)
             {
@@ -41,9 +40,9 @@ namespace Kastra.Business
                 home.MetaDescription = "My home page";
                 home.PageTemplateId = template.PageTemplateId;
                 home.Title = "Home";
-                home.MetaKeywords = String.Empty;
-                home.MetaDescription = String.Empty;
-                home.MetaRobot = String.Empty;
+                home.MetaKeywords = string.Empty;
+                home.MetaDescription = string.Empty;
+                home.MetaRobot = string.Empty;
 
                 _dbContext.KastraPages.Add(home);
                 _dbContext.SaveChanges();
@@ -56,13 +55,13 @@ namespace Kastra.Business
 
             // Install default template
             KastraPageTemplates template = _dbContext.KastraPageTemplates
-                                                .SingleOrDefault(t => t.KeyName == Constants.SiteConfig.DefaultPageTemplateKeyName);
+                                                .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
             
             if(template != null)
                 return;
 
             template = new KastraPageTemplates();
-            template.KeyName = Constants.SiteConfig.DefaultPageTemplateKeyName;
+            template.KeyName = SiteConfiguration.DefaultPageTemplateKeyName;
             template.Name = "Default template";
             template.ModelClass = "Kastra.Web.Models.Template.DefaultTemplateViewModel";
 
@@ -88,7 +87,7 @@ namespace Kastra.Business
 
             // Add home template
             KastraPageTemplates homeTemplate = _dbContext.KastraPageTemplates
-                                                .SingleOrDefault(t => t.KeyName == Constants.SiteConfig.DefaultPageTemplateKeyName);
+                                                .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
             
             if(homeTemplate != null)
                 return;
@@ -125,17 +124,17 @@ namespace Kastra.Business
         {
             // Granted permission
             KastraPermissions permission = new KastraPermissions();
-            permission.Name = Constants.ModuleConfig.GrantedAccessPermission;
+            permission.Name = ModuleConfiguration.GrantedAccessPermission;
             _dbContext.KastraPermissions.Add(permission);
 
             // Read
             permission = new KastraPermissions();
-            permission.Name = Constants.ModuleConfig.ReadPermission;
+            permission.Name = ModuleConfiguration.ReadPermission;
             _dbContext.KastraPermissions.Add(permission);
 
             // Edit
             permission = new KastraPermissions();
-            permission.Name = Constants.ModuleConfig.EditPermission;
+            permission.Name = ModuleConfiguration.EditPermission;
             _dbContext.KastraPermissions.Add(permission);
 
             _dbContext.SaveChanges();

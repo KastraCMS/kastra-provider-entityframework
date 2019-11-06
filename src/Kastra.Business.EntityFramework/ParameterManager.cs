@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using Kastra.Core;
 using Kastra.Core.Business;
+using Kastra.Core.Constants;
 using Kastra.Core.Dto;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
@@ -14,8 +13,8 @@ namespace Kastra.Business
 {
 	public class ParameterManager : IParameterManager
 	{
-		private readonly KastraContext _dbContext = null;
-		private readonly CacheEngine _cacheEngine = null;
+		private readonly KastraContext _dbContext;
+		private readonly CacheEngine _cacheEngine;
 
         public ParameterManager(KastraContext dbContext, CacheEngine cacheEngine)
 		{
@@ -27,18 +26,18 @@ namespace Kastra.Business
 		{
 			SiteConfigurationInfo siteConfig = null;
 
-			if (!_cacheEngine.GetCacheObject(Constants.SiteConfig.SiteConfigCacheKey, out siteConfig))
-				siteConfig = _cacheEngine.SetCacheObject(Constants.SiteConfig.SiteConfigCacheKey, LoadSiteConfiguration());
+			if (!_cacheEngine.GetCacheObject(SiteConfiguration.SiteConfigCacheKey, out siteConfig))
+				siteConfig = _cacheEngine.SetCacheObject(SiteConfiguration.SiteConfigCacheKey, LoadSiteConfiguration());
 
 			return siteConfig;
 		}
 
 		private SiteConfigurationInfo LoadSiteConfiguration()
 		{
-			String obj = null;
+			string obj = null;
 			TypeConverter typeConverter = null;
 			SiteConfigurationInfo siteConfiguration = new SiteConfigurationInfo();
-			IDictionary<String, String> parameters = null;
+			IDictionary<string, string> parameters = null;
 
 			if (_dbContext == null)
 				return siteConfiguration;

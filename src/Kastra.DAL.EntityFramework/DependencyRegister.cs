@@ -1,7 +1,8 @@
-﻿using Kastra.Core;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
+using Kastra.Core.Configuration;
+using Kastra.Core.Modules;
 
 namespace Kastra.DAL.EntityFramework
 {

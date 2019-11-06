@@ -2,17 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Kastra.Core;
 using Kastra.Core.Business;
+using Kastra.Core.Configuration;
+using Kastra.Core.Modules;
 using Kastra.DAL.EntityFramework;
 
 namespace Kastra.Business
 {
     public class ModuleManager : IModuleManager
     {
-        private readonly KastraContext _dbContext = null;
-        private readonly IViewManager _viewManager = null;
-        private readonly IServiceProvider _serviceProvider = null;
+        private readonly KastraContext _dbContext;
+        private readonly IViewManager _viewManager;
+        private readonly IServiceProvider _serviceProvider;
 
         public ModuleManager(KastraContext dbContext, IServiceProvider serviceProvider, IViewManager viewManager)
         {

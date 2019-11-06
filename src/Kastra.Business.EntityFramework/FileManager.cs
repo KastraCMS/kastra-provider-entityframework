@@ -4,9 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kastra.Business.Mappers;
-using Kastra.Core;
 using Kastra.Core.Business;
-using Kastra.Core.Dto;
+using Kastra.Core.Configuration;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
 using Microsoft.Extensions.Configuration;
@@ -15,8 +14,8 @@ namespace Kastra.Business
 {
     public class FileManager : IFileManager
     {
-        private KastraContext _dbContext = null;
-        private readonly AppSettings _appSettings = null;
+        private KastraContext _dbContext;
+        private readonly AppSettings _appSettings;
 
         public FileManager(KastraContext dbContext, IParameterManager parameterManager, IConfiguration configuration)
         {
@@ -31,7 +30,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(stream));
             }
 
-            if (file.FileId != null && _dbContext.KastraFiles.Any(f => f.FileId == file.FileId))
+            if (_dbContext.KastraFiles.Any(f => f.FileId == file.FileId))
             {
                 throw new ArgumentException($"{nameof(file.FileId)} already exists");
             }
@@ -63,15 +62,10 @@ namespace Kastra.Business
         }
 
         public void DeleteFile(Guid fileId)
-        {
-            if (fileId == null)
-            {
-                throw new ArgumentNullException(nameof(fileId));
-            }
-            
+        {   
             KastraFiles file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
 
-            if (file == null)
+            if (file is null)
             {
                 throw new Exception($"{nameof(fileId)} not found");
             }
@@ -81,11 +75,6 @@ namespace Kastra.Business
 
         public byte[] DownloadFileByGuid(Guid fileId)
         {
-            if (fileId == null)
-            {
-                throw new ArgumentNullException(nameof(fileId));
-            }
-
             Core.Dto.FileInfo file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId)?.ToFileInfo();
 
             if (file == null)
@@ -98,11 +87,6 @@ namespace Kastra.Business
 
         public Core.Dto.FileInfo GetFile(Guid fileId)
         {
-            if (fileId == null)
-            {
-                throw new ArgumentNullException(nameof(fileId));
-            }
-
             KastraFiles file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
 
             return file?.ToFileInfo();
@@ -110,7 +94,7 @@ namespace Kastra.Business
 
         public IList<Core.Dto.FileInfo> GetFilesByPath(string path)
         {
-            if (String.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(path))
             {
                 throw new ArgumentNullException(nameof(path));
             }

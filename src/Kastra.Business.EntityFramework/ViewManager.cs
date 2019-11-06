@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Kastra.Business.Mappers;
-using Kastra.Core;
 using Kastra.Core.Business;
+using Kastra.Core.Constants;
 using Kastra.Core.Dto;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
@@ -16,8 +15,8 @@ namespace Kastra.Business
     {
         #region Private members
 
-        private readonly KastraContext _dbContext = null;
-        private readonly CacheEngine _cacheEngine = null;
+        private readonly KastraContext _dbContext;
+        private readonly CacheEngine _cacheEngine;
 
         #endregion
 
@@ -39,7 +38,7 @@ namespace Kastra.Business
             return pagesList;
         }
 
-        public Boolean SavePage(PageInfo page)
+        public bool SavePage(PageInfo page)
         {
             if (page == null)
                 return false;
@@ -86,11 +85,11 @@ namespace Kastra.Business
             return true;
         }
 
-        public PageInfo GetPage(Int32 pageID, Boolean getAll = false)
+        public PageInfo GetPage(int pageID, bool getAll = false)
         {
             PageInfo pageInfo = null;
             KastraPages page = null;
-            String pageCacheKey = String.Format(Constants.PageConfig.PageCacheKey, pageID);
+            string pageCacheKey = string.Format(PageConfiguration.PageCacheKey, pageID);
 
             if (_cacheEngine.GetCacheObject<PageInfo>(pageCacheKey, out pageInfo))
                 return pageInfo;
@@ -131,11 +130,11 @@ namespace Kastra.Business
             return pageInfo;
         }
 
-        public PageInfo GetPageByKey(String keyName, Boolean getAll = false)
+        public PageInfo GetPageByKey(string keyName, bool getAll = false)
         {
             KastraPages page = null;
             PageInfo pageInfo = new PageInfo();
-            String pageCacheKey = String.Format(Constants.PageConfig.PageByKeyCacheKey, keyName);
+            string pageCacheKey = string.Format(PageConfiguration.PageByKeyCacheKey, keyName);
 
             if (_cacheEngine.GetCacheObject<PageInfo>(pageCacheKey, out pageInfo))
                 return pageInfo;
@@ -176,7 +175,7 @@ namespace Kastra.Business
             return pageInfo;
         }
 
-        public Boolean DeletePage(Int32 pageID)
+        public bool DeletePage(int pageID)
         {
             if (pageID < 1)
                 return false;
@@ -209,7 +208,7 @@ namespace Kastra.Business
             return pageTemplatesList;
         }
 
-        public TemplateInfo GetPageTemplate(Int32 pageTemplateID)
+        public TemplateInfo GetPageTemplate(int pageTemplateID)
         {
             KastraPageTemplates template = _dbContext.KastraPageTemplates.SingleOrDefault(pt => pt.PageTemplateId == pageTemplateID);
 
@@ -219,7 +218,7 @@ namespace Kastra.Business
             return TemplateMapper.ToTemplateInfo(template);
         }
 
-        public Boolean SavePageTemplate(TemplateInfo templateInfo)
+        public bool SavePageTemplate(TemplateInfo templateInfo)
         {
             KastraPageTemplates template = null;
 
@@ -256,7 +255,7 @@ namespace Kastra.Business
             return true;
         }
 
-        public Boolean DeletePageTemplate(Int32 pageTemplateID)
+        public bool DeletePageTemplate(int pageTemplateID)
         {
             if (pageTemplateID < 1)
                 return false;
@@ -279,7 +278,7 @@ namespace Kastra.Business
 
         #region Place
 
-        public IList<PlaceInfo> GetPlacesList(Boolean includeModules = false)
+        public IList<PlaceInfo> GetPlacesList(bool includeModules = false)
         {
             if (includeModules)
                 return _dbContext.KastraPlaces.Include(p => p.KastraModules).Select(p => PlaceMapper.ToPlaceInfo(p, true)).ToList();
@@ -288,7 +287,7 @@ namespace Kastra.Business
 
         }
 
-        public PlaceInfo GetPlace(Int32 placeID)
+        public PlaceInfo GetPlace(int placeID)
         {
             KastraPlaces place = _dbContext.KastraPlaces.SingleOrDefault(pt => pt.PlaceId == placeID);
 
@@ -298,7 +297,7 @@ namespace Kastra.Business
             return PlaceMapper.ToPlaceInfo(place);
         }
 
-        public Boolean SavePlace(PlaceInfo place)
+        public bool SavePlace(PlaceInfo place)
         {
             if (place == null)
                 return false;
@@ -327,7 +326,7 @@ namespace Kastra.Business
             return true;
         }
 
-        public Boolean DeletePlace(Int32 placeID)
+        public bool DeletePlace(int placeID)
         {
             if (placeID < 1)
                 return false;
@@ -350,7 +349,7 @@ namespace Kastra.Business
 
         #region Module Definition
 
-        public ModuleDefinitionInfo GetModuleDef(Int32 moduleDefID, Boolean getModuleControls = false)
+        public ModuleDefinitionInfo GetModuleDef(int moduleDefID, bool getModuleControls = false)
         {
             KastraModuleDefinitions moduleDefinition = null;
 
@@ -370,7 +369,7 @@ namespace Kastra.Business
             return _dbContext.KastraModuleDefinitions.Select(md => ModuleDefinitionMapper.ToModuleDefinitionInfo(md, false, false)).ToList();
         }
 
-        public Boolean SaveModuleDef(ModuleDefinitionInfo moduleDefinition)
+        public bool SaveModuleDef(ModuleDefinitionInfo moduleDefinition)
         {
             KastraModuleDefinitions newModuleDefinition = null;
 
@@ -392,7 +391,7 @@ namespace Kastra.Business
             return true;
         }
 
-        public Boolean DeleteModuleDef(Int32 moduleDefinitionId)
+        public bool DeleteModuleDef(int moduleDefinitionId)
         {
             if (moduleDefinitionId < 1)
                 return false;
@@ -415,7 +414,7 @@ namespace Kastra.Business
 
         #region Module
 
-        public ModuleInfo GetModule(Int32 moduleID, Boolean getModuleDef = false, Boolean getPlace = false)
+        public ModuleInfo GetModule(int moduleID, bool getModuleDef = false, bool getPlace = false)
         {
             KastraModules module = null;
             IQueryable<KastraModules> query = _dbContext.KastraModules.Include(m => m.KastraModulePermissions)
@@ -435,7 +434,7 @@ namespace Kastra.Business
             return ModuleMapper.ToModuleInfo(module, true);
         }
 
-        public IList<ModuleInfo> GetModulesList(Boolean getModuleDefs = false)
+        public IList<ModuleInfo> GetModulesList(bool getModuleDefs = false)
         {
             IList<KastraModules> modulesList = null;
 
@@ -447,7 +446,7 @@ namespace Kastra.Business
             return modulesList.Select(m => ModuleMapper.ToModuleInfo(m, false)).ToList();
         }
 
-        public IList<ModuleInfo> GetModulesListByPlaceId(Int32 placeId, Boolean getModuleDefs = false)
+        public IList<ModuleInfo> GetModulesListByPlaceId(int placeId, bool getModuleDefs = false)
         {
             IList<KastraModules> modulesList = null;
 
@@ -462,7 +461,7 @@ namespace Kastra.Business
             return modulesList.Select(m => ModuleMapper.ToModuleInfo(m, true)).ToList();
         }
 
-        public IList<ModuleInfo> GetModulesListByPageId(Int32 pageId, Boolean getModuleDefs = false)
+        public IList<ModuleInfo> GetModulesListByPageId(int pageId, bool getModuleDefs = false)
         {
             IList<KastraModules> modulesList = null;
 
@@ -477,7 +476,7 @@ namespace Kastra.Business
             return modulesList.Select(m => ModuleMapper.ToModuleInfo(m, false)).ToList();
         }
 
-        public Boolean SaveModule(ModuleInfo module)
+        public bool SaveModule(ModuleInfo module)
         {
             KastraModules newModule = null;
 
@@ -498,12 +497,12 @@ namespace Kastra.Business
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
-            _cacheEngine.ClearCacheContains(String.Format(Constants.PageConfig.PageByKeyCacheKey, String.Empty));
+            _cacheEngine.ClearCacheContains(string.Format(PageConfiguration.PageByKeyCacheKey, string.Empty));
 
             return true;
         }
 
-        public Boolean DeleteModule(Int32 moduleID)
+        public bool DeleteModule(int moduleID)
         {
             if (moduleID < 1)
                 return false;
@@ -524,7 +523,7 @@ namespace Kastra.Business
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
-            _cacheEngine.ClearCacheContains(String.Format(Constants.PageConfig.PageByKeyCacheKey, String.Empty));
+            _cacheEngine.ClearCacheContains(string.Format(PageConfiguration.PageByKeyCacheKey, string.Empty));
 
             return true;
         }
@@ -533,7 +532,7 @@ namespace Kastra.Business
 
         #region Module control
 
-        public ModuleControlInfo GetModuleControl(Int32 moduleControlId)
+        public ModuleControlInfo GetModuleControl(int moduleControlId)
         {
             KastraModuleControls moduleControl = _dbContext.KastraModuleControls.SingleOrDefault(mc => mc.ModuleControlId == moduleControlId);
 
@@ -543,12 +542,12 @@ namespace Kastra.Business
             return ModuleControlMapper.ToModuleControlInfo(moduleControl);
         }
 
-        public IList<ModuleControlInfo> GetModuleControlsList(Int32 moduleDefId)
+        public IList<ModuleControlInfo> GetModuleControlsList(int moduleDefId)
         {
             return _dbContext.KastraModuleControls.Where(mc => mc.ModuleDefId == moduleDefId).Select(mc => ModuleControlMapper.ToModuleControlInfo(mc)).ToList();
         }
 
-        public Boolean SaveModuleControl(ModuleControlInfo moduleControlInfo)
+        public bool SaveModuleControl(ModuleControlInfo moduleControlInfo)
         {
             KastraModuleControls moduleControl = _dbContext.KastraModuleControls
                                                            .SingleOrDefault(mc => mc.ModuleControlId == moduleControlInfo.ModuleControlId);
@@ -574,7 +573,7 @@ namespace Kastra.Business
             return true;
         }
 
-        public Boolean DeleteModuleControl(Int32 moduleControlId)
+        public bool DeleteModuleControl(int moduleControlId)
         {
             if (moduleControlId < 1)
                 return false;
