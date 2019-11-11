@@ -56,14 +56,17 @@ namespace Kastra.Business
             // Install default template
             KastraPageTemplates template = _dbContext.KastraPageTemplates
                                                 .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
-            
-            if(template != null)
+
+            if (template != null)
+            {
                 return;
+            }
 
             template = new KastraPageTemplates();
             template.KeyName = SiteConfiguration.DefaultPageTemplateKeyName;
             template.Name = "Default template";
             template.ModelClass = "Kastra.Web.Models.Template.DefaultTemplateViewModel";
+            template.ViewPath = "Page";
 
             template.KastraPlaces = new List<KastraPlaces>();
 
@@ -88,14 +91,17 @@ namespace Kastra.Business
             // Add home template
             KastraPageTemplates homeTemplate = _dbContext.KastraPageTemplates
                                                 .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
-            
-            if(homeTemplate != null)
+
+            if (homeTemplate != null)
+            {
                 return;
+            }
 
             homeTemplate = new KastraPageTemplates();
             homeTemplate.KeyName = "HomeTemplate";
             homeTemplate.Name = "Home template";
             homeTemplate.ModelClass = "Kastra.Web.Models.Template.HomeTemplateViewModel";
+            homeTemplate.ViewPath = "Page";
 
             homeTemplate.KastraPlaces = new List<KastraPlaces>();
 
