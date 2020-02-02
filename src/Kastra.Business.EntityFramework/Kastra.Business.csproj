@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <ReleaseVersion>0.9.29</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
+    <Version>0.9.30</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kastra.DAL.EntityFramework\Kastra.DAL.EntityFramework.csproj" />
@@ -15,6 +16,6 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Kastra.Core" Version="0.9.29" />
+    <PackageReference Include="Kastra.Core" Version="0.9.30" />
   </ItemGroup>
 </Project>
