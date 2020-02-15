@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <ReleaseVersion>0.9.29</ReleaseVersion>
+    <ReleaseVersion>0.9.31</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
-    <Version>0.9.30</Version>
+    <Version>0.9.31</Version>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -15,6 +15,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.1" />
-    <PackageReference Include="Kastra.Core" Version="0.9.30" />
+    <PackageReference Include="Kastra.Core" Version="0.9.31" />
   </ItemGroup>
 </Project>
