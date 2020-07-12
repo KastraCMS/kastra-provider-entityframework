@@ -25,18 +25,26 @@ namespace Kastra.Business
 
         public void AddFile(Core.Dto.FileInfo file, Stream stream)
         {
-            if (stream == null)
+            if (stream is null)
             {
                 throw new ArgumentNullException(nameof(stream));
             }
 
-            if (_dbContext.KastraFiles.Any(f => f.FileId == file.FileId))
+            if (file is null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
+            if (file.FileId != Guid.Empty && _dbContext.KastraFiles.Any(f => f.FileId == file.FileId))
             {
                 throw new ArgumentException($"{nameof(file.FileId)} already exists");
             }
 
             // Generate new file id
-            file.FileId = Guid.NewGuid();
+            if (file.FileId == Guid.Empty)
+            {
+                file.FileId = Guid.NewGuid();
+            }
 
             // Get file path
             string filePath = GetFilePath(file);
@@ -53,6 +61,7 @@ namespace Kastra.Business
 
                 // Save file in database
                 _dbContext.KastraFiles.Add(file.ToKastraFile());
+                _dbContext.SaveChanges();
             }
             catch (Exception e)
             {
@@ -131,7 +140,7 @@ namespace Kastra.Business
             sb.Append(Path.DirectorySeparatorChar);
             sb.Append(file.Path.Replace("..", String.Empty));
             sb.Append(Path.DirectorySeparatorChar);
-            sb.Append($"{file.FileId}_{file.Name}");
+            sb.Append(Path.GetFileName(file.Name));
 
             return sb.ToString();
         }
