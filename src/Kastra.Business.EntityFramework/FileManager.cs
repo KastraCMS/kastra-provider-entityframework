@@ -79,7 +79,13 @@ namespace Kastra.Business
                 throw new Exception($"{nameof(fileId)} not found");
             }
 
+            // Get file path
+            string filePath = GetFilePath(file.ToFileInfo());
+
+            File.Delete(filePath);
+
             _dbContext.KastraFiles.Remove(file);
+            _dbContext.SaveChanges();
         }
 
         public byte[] DownloadFileByGuid(Guid fileId)
