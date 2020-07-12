@@ -1,10 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <ReleaseVersion>0.9.32</ReleaseVersion>
+    <ReleaseVersion>0.9.33</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
-    <Version>0.9.32</Version>
+    <Version>0.9.33</Version>
+    <Authors>Baptiste Coppéré</Authors>
+    <Product />
+    <Company>Baptiste Coppéré</Company>
+    <Description>Kastra data access layer</Description>
+    <Copyright>Baptiste Coppéré</Copyright>
+    <PackageProjectUrl>http://www.kastra.net</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -15,6 +23,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.3" />
-    <PackageReference Include="Kastra.Core" Version="0.9.32" />
+    <PackageReference Include="Kastra.Core" Version="0.9.33" />
   </ItemGroup>
 </Project>
