@@ -3,6 +3,7 @@ using Kastra.Core.Modules;
 using Kastra.Core.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Kastra.Business
 {
@@ -20,6 +21,14 @@ namespace Kastra.Business
             services.AddScoped<IEmailSender, EmailSender>();
             services.AddScoped<IEmailManager, EmailManager>();
             services.AddScoped<IFileManager, FileManager>();
+
+            // HCaptcha
+            services.AddScoped<ICaptchaService, CaptchaService>();
+
+            services.AddHttpClient("hCaptcha", c =>
+            {
+                c.BaseAddress = new Uri("https://hcaptcha.com/");
+            });
         }
     }
 }
