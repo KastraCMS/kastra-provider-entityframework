@@ -507,7 +507,10 @@ namespace Kastra.Business
             if (moduleID < 1)
                 return false;
 
-            KastraModules module = _dbContext.KastraModules.SingleOrDefault(p => p.ModuleId == moduleID);
+            KastraModules module = _dbContext.KastraModules
+                                    .Include(m => m.KastraModulePermissions)
+                                    .Include(m => m.Place)
+                                    .SingleOrDefault(p => p.ModuleId == moduleID);
 
             if (module == null)
                 return false;
