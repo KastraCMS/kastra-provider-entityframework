@@ -1,32 +1,35 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Kastra.DAL.EntityFramework.Models;
-using System;
+using Kastra.Core.Identity;
 
 namespace Kastra.DAL.EntityFramework
 {
-    public class KastraContext : DbContext
+    public class KastraDbContext : ApplicationDbContext
     {
-        public virtual DbSet<KastraMailTemplate> KastraMailTemplates { get; set; }
-        public virtual DbSet<KastraModuleControls> KastraModuleControls { get; set; }
-        public virtual DbSet<KastraModuleDefinitions> KastraModuleDefinitions { get; set; }
-        public virtual DbSet<KastraModulePermissions> KastraModulePermissions { get; set; }
-        public virtual DbSet<KastraModules> KastraModules { get; set; }
-        public virtual DbSet<KastraPageTemplates> KastraPageTemplates { get; set; }
-        public virtual DbSet<KastraPages> KastraPages { get; set; }
-        public virtual DbSet<KastraParameters> KastraParameters { get; set; }
-        public virtual DbSet<KastraPermissions> KastraPermissions { get; set; }
-        public virtual DbSet<KastraPlaces> KastraPlaces { get; set; }
-        public virtual DbSet<KastraVisitors> KastraVisitors { get; set; }
-        public virtual DbSet<KastraFiles> KastraFiles { get; set; }
+        public virtual DbSet<MailTemplate> KastraMailTemplates { get; set; }
+        public virtual DbSet<ModuleControl> KastraModuleControls { get; set; }
+        public virtual DbSet<ModuleDefinition> KastraModuleDefinitions { get; set; }
+        public virtual DbSet<ModulePermission> KastraModulePermissions { get; set; }
+        public virtual DbSet<ModuleNavigation> KastraModuleNavigations { get; set; }
+        public virtual DbSet<Module> KastraModules { get; set; }
+        public virtual DbSet<PageTemplate> KastraPageTemplates { get; set; }
+        public virtual DbSet<Page> KastraPages { get; set; }
+        public virtual DbSet<Parameter> KastraParameters { get; set; }
+        public virtual DbSet<Permission> KastraPermissions { get; set; }
+        public virtual DbSet<Place> KastraPlaces { get; set; }
+        public virtual DbSet<Visitor> KastraVisitors { get; set; }
+        public virtual DbSet<File> KastraFiles { get; set; }
 
         
-        public KastraContext(DbContextOptions<KastraContext> options) : base(options)
+        public KastraDbContext(DbContextOptions<KastraDbContext> options) : base(options)
         {
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<KastraVisitors>(entity =>
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Visitor>(entity =>
             {
                 entity.HasKey(e => e.Id)
                     .HasName("PK_Kastra_Visitors");
@@ -42,9 +45,11 @@ namespace Kastra.DAL.EntityFramework
                 entity.Property(e => e.UserAgent).HasColumnName("UserAgent").HasMaxLength(256);
 
                 entity.Property(e => e.UserId).HasColumnName("UserId");
+
+                entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId);
             });
 
-            modelBuilder.Entity<KastraModuleControls>(entity =>
+            modelBuilder.Entity<ModuleControl>(entity =>
             {
                 entity.HasKey(e => e.ModuleControlId)
                     .HasName("PK_Kastra_Module_Controls");
@@ -55,17 +60,17 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.KeyName).HasMaxLength(150);
 
-                entity.Property(e => e.ModuleDefId).HasColumnName("ModuleDefID");
+                entity.Property(e => e.ModuleDefinitionId).HasColumnName("ModuleDefID");
 
                 entity.Property(e => e.Path).HasMaxLength(250);
 
-                entity.HasOne(d => d.ModuleDef)
-                    .WithMany(p => p.KastraModuleControls)
-                    .HasForeignKey(d => d.ModuleDefId)
+                entity.HasOne(d => d.ModuleDefinition)
+                    .WithMany(p => p.ModuleControls)
+                    .HasForeignKey(d => d.ModuleDefinitionId)
                     .HasConstraintName("FK_Kastra_Module_Controls_Kastra_Modules");
             });
 
-            modelBuilder.Entity<KastraModuleDefinitions>(entity =>
+            modelBuilder.Entity<ModuleDefinition>(entity =>
             {
                 entity.HasKey(e => e.ModuleDefId)
                     .HasName("PK_Kastra_Module_Definitions");
@@ -94,7 +99,7 @@ namespace Kastra.DAL.EntityFramework
                     .HasMaxLength(50);
             });
 
-            modelBuilder.Entity<KastraModulePermissions>(entity =>
+            modelBuilder.Entity<ModulePermission>(entity =>
             {
                 entity.HasKey(e => e.ModulePermissionId)
                     .HasName("PK_Kastra_Module_Permissions");
@@ -108,7 +113,7 @@ namespace Kastra.DAL.EntityFramework
                 entity.Property(e => e.PermissionId).HasColumnName("PermissionID");
 
                 entity.HasOne(d => d.Module)
-				    .WithMany(p => p.KastraModulePermissions)
+				    .WithMany(p => p.ModulePermissions)
                 	.HasForeignKey(d => d.ModuleId)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_Kastra_Module_Permissions_Kastra_Modules");
@@ -119,7 +124,35 @@ namespace Kastra.DAL.EntityFramework
                     .HasConstraintName("FK_Kastra_Module_Permissions_Kastra_Module_Permissions");
             });
 
-            modelBuilder.Entity<KastraModules>(entity =>
+            modelBuilder.Entity<ModuleNavigation>(entity =>
+            {
+                entity.HasKey(e => e.Id)
+                    .HasName("PK_Kastra_Module_Navigations");
+
+                entity.ToTable("Kastra_Module_Navigations");
+
+                entity.Property(e => e.Id).HasColumnName("ModuleNavigationID");
+
+                entity.Property(e => e.ModuleDefinitionId).HasColumnName("ModuleDefinitionID");
+
+                entity.Property(e => e.Name);
+
+                entity.Property(e => e.Url)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+                
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasMaxLength(10);
+
+                entity.HasOne(d => d.ModuleDefinition)
+                    .WithMany(p => p.ModuleNavigations)
+                    .HasForeignKey(d => d.ModuleDefinitionId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_Kastra_Module_Navigations_Kastra_Module!Definitions");
+            });
+
+            modelBuilder.Entity<Module>(entity =>
             {
                 entity.HasKey(e => e.ModuleId)
                     .HasName("PK_Kastra_Modules");
@@ -128,7 +161,7 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.ModuleId).HasColumnName("ModuleID");
 
-                entity.Property(e => e.ModuleDefId).HasColumnName("ModuleDefID");
+                entity.Property(e => e.ModuleDefinitionId).HasColumnName("ModuleDefID");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
@@ -140,9 +173,9 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.IsDisabled).HasColumnName("IsDisabled");
 
-                entity.HasOne(d => d.ModuleDef)
-                    .WithMany(p => p.KastraModules)
-                    .HasForeignKey(d => d.ModuleDefId)
+                entity.HasOne(d => d.ModuleDefinition)
+                    .WithMany(p => p.Modules)
+                    .HasForeignKey(d => d.ModuleDefinitionId)
                     .HasConstraintName("FK_Kastra_Modules_Kastra_Module_Definitions");
 
                 entity.HasOne(d => d.Place)
@@ -152,11 +185,11 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.HasOne(d => d.StaticPlace)
                     .WithOne(p => p.StaticKastraModule)
-                    .HasForeignKey<KastraPlaces>(p => p.ModuleId)
+                    .HasForeignKey<Place>(p => p.ModuleId)
                     .IsRequired(false);
             });
 
-            modelBuilder.Entity<KastraPageTemplates>(entity =>
+            modelBuilder.Entity<PageTemplate>(entity =>
             {
                 entity.HasKey(e => e.PageTemplateId)
                     .HasName("PK_Kastra_Page_Templates");
@@ -182,7 +215,7 @@ namespace Kastra.DAL.EntityFramework
                     .HasMaxLength(200);
             });
 
-            modelBuilder.Entity<KastraPages>(entity =>
+            modelBuilder.Entity<Page>(entity =>
             {
                 entity.HasKey(e => e.PageId)
                     .HasName("PK_Kastra_Pages");
@@ -216,7 +249,7 @@ namespace Kastra.DAL.EntityFramework
                     .HasConstraintName("FK_Kastra_Pages_Kastra_Page_Templates");
             });
 
-            modelBuilder.Entity<KastraParameters>(entity =>
+            modelBuilder.Entity<Parameter>(entity =>
             {
                 entity.HasKey(e => e.ParameterId)
                     .HasName("PK_Kastra_Parameters");
@@ -230,7 +263,7 @@ namespace Kastra.DAL.EntityFramework
                 entity.Property(e => e.Value).HasMaxLength(1000);
             });
 
-            modelBuilder.Entity<KastraPermissions>(entity =>
+            modelBuilder.Entity<Permission>(entity =>
             {
                 entity.HasKey(e => e.PermissionId)
                     .HasName("PK_Kastra_Permissions");
@@ -244,7 +277,7 @@ namespace Kastra.DAL.EntityFramework
                     .HasMaxLength(150);
             });
 
-            modelBuilder.Entity<KastraPlaces>(entity =>
+            modelBuilder.Entity<Place>(entity =>
             {
                 entity.HasKey(e => e.PlaceId)
                     .HasName("PK_Kastra_Places");
@@ -267,7 +300,7 @@ namespace Kastra.DAL.EntityFramework
                 entity.Property(e => e.ModuleId);
             });
 
-            modelBuilder.Entity<KastraFiles>(entity => {
+            modelBuilder.Entity<File>(entity => {
                 entity.HasKey(e => e.FileId)
                     .HasName("PK_Kastra_Files");
 
@@ -286,7 +319,7 @@ namespace Kastra.DAL.EntityFramework
                     .HasDefaultValueSql("getdate()");
             });
 
-            modelBuilder.Entity<KastraMailTemplate>(entity =>
+            modelBuilder.Entity<MailTemplate>(entity =>
             {
                 entity.HasKey(e => e.MailTemplateId)
                     .HasName("PK_Kastra_Mail_Templates");

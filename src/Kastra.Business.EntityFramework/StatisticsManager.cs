@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kastra.Business.Mappers;
-using Kastra.Core.Business;
+using Kastra.Core.Services.Contracts;
 using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
@@ -16,12 +16,12 @@ namespace Kastra.Business
 
         #region Private members
 
-        private readonly KastraContext _dbContext = null;
+        private readonly KastraDbContext _dbContext = null;
         private readonly CacheEngine _cacheEngine = null;
 
         #endregion
 
-        public StatisticsManager(KastraContext dbContext, CacheEngine cacheEngine)
+        public StatisticsManager(KastraDbContext dbContext, CacheEngine cacheEngine)
         {
             _dbContext = dbContext;
             _cacheEngine = cacheEngine;
@@ -34,11 +34,10 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(visitorInfo));
             }
 
-            bool isLoggedIn = !String.IsNullOrEmpty(visitorInfo.UserId);
+            bool isLoggedIn = visitorInfo.UserId.HasValue;
             string ipAddress = visitorInfo.IpAddress;
-            Dictionary<string, bool> recentVisitors = null;
 
-            if (_cacheEngine.GetCacheObject<Dictionary<string, bool>>(VISITS_KEY, out recentVisitors))
+            if (_cacheEngine.GetCacheObject(VISITS_KEY, out Dictionary<string, bool> recentVisitors))
             {
                 // If visitor exists in cache
                 if (recentVisitors.ContainsKey(ipAddress))
@@ -50,15 +49,17 @@ namespace Kastra.Business
 
                         // Update existing visit
                         DateTime startDate = DateTime.UtcNow.Subtract(_cacheEngine.CacheOptions?.SlidingExpiration ?? new TimeSpan());
-                        KastraVisitors visit = _dbContext.KastraVisitors.Where(v => v.LastVisitAt >= startDate && v.LastVisitAt <= DateTime.UtcNow)
-                                                .SingleOrDefault(v => v.IpAddress == ipAddress);
+                        Visitor visit = _dbContext.KastraVisitors
+                            .Where(v => v.LastVisitAt >= startDate && v.LastVisitAt <= DateTime.UtcNow)
+                            .SingleOrDefault(v => v.IpAddress == ipAddress);
 
-                        if (visit == null)
+                        if (visit is null)
                         {
                             return false;
                         }
 
                         visit.UserId = visit.UserId;
+
                         _dbContext.KastraVisitors.Update(visit);
                         _dbContext.SaveChanges();
 
@@ -76,11 +77,11 @@ namespace Kastra.Business
             {
                 recentVisitors = new Dictionary<string, bool>();
                 recentVisitors.Add(visitorInfo.IpAddress, isLoggedIn);
-                _cacheEngine.SetCacheObject<Dictionary<string, bool>>(VISITS_KEY, recentVisitors);
+                _cacheEngine.SetCacheObject(VISITS_KEY, recentVisitors);
             }
 
             // Save visit in database
-            KastraVisitors visitor = visitorInfo.ToKastraVisitor();
+            Visitor visitor = visitorInfo.ToVisitor();
 
             _dbContext.KastraVisitors.Add(visitor);
             _dbContext.SaveChanges();
@@ -93,16 +94,20 @@ namespace Kastra.Business
             return _dbContext.KastraVisitors.Where(v => v.LastVisitAt >= fromDate && v.LastVisitAt <= toDate).Count();
         }
 
-        public IList<VisitorInfo> GetVisitsByUserId(string userId)
+        public IList<VisitorInfo> GetVisitsByUserId(Guid userId)
         {
-            return _dbContext.KastraVisitors.Where(v => v.UserId == userId)
-                             .Select(v => v.ToVisitorInfo()).ToList();
+            return _dbContext.KastraVisitors
+                .Where(v => v.UserId == userId)
+                .Select(v => v.ToVisitorInfo())
+                .ToList();
         }
 
         public IList<VisitorInfo> GetVisitsFromDate(DateTime fromDate, DateTime toDate)
         {
-            return _dbContext.KastraVisitors.Where(v => v.LastVisitAt >= fromDate && v.LastVisitAt <= toDate)
-                             .Select(v => v.ToVisitorInfo()).ToList();
+            return _dbContext.KastraVisitors
+                .Where(v => v.LastVisitAt >= fromDate && v.LastVisitAt <= toDate)
+                .Select(v => v.ToVisitorInfo())
+                .ToList();
         }
     }
 }

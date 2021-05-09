@@ -2,9 +2,9 @@
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using Kastra.Core.Business;
+using Kastra.Core.Services.Contracts;
 using Kastra.Core.Constants;
-using Kastra.Core.Dto;
+using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
@@ -13,10 +13,10 @@ namespace Kastra.Business
 {
 	public class ParameterManager : IParameterManager
 	{
-		private readonly KastraContext _dbContext;
+		private readonly KastraDbContext _dbContext;
 		private readonly CacheEngine _cacheEngine;
 
-        public ParameterManager(KastraContext dbContext, CacheEngine cacheEngine)
+        public ParameterManager(KastraDbContext dbContext, CacheEngine cacheEngine)
 		{
             _cacheEngine = cacheEngine;
 			_dbContext = dbContext;
@@ -50,7 +50,7 @@ namespace Kastra.Business
                 if(parameters == null || !parameters.ContainsKey(property.Name))
                 {
                     //Save parameter
-                    _dbContext.KastraParameters.Add(new KastraParameters() 
+                    _dbContext.KastraParameters.Add(new Parameter() 
                     { 
                         Key = property.Name, 
                         Value = property.GetValue(siteConfiguration)?.ToString() 
@@ -80,8 +80,8 @@ namespace Kastra.Business
 
 		public void SaveSiteConfiguration(SiteConfigurationInfo siteConfiguration)
 		{
-			KastraParameters parameter = null;
-			List<KastraParameters> parameters = _dbContext.KastraParameters.ToList();
+			Parameter parameter = null;
+			List<Parameter> parameters = _dbContext.KastraParameters.ToList();
 
 			foreach (PropertyInfo property in typeof(SiteConfigurationInfo).GetProperties())
 			{
@@ -92,7 +92,7 @@ namespace Kastra.Business
 				
 				if (parameters == null || parameter == null)
 				{
-					parameter = new KastraParameters();
+					parameter = new Parameter();
 					parameter.Key = property.Name;
 					parameter.Name = ((property.GetCustomAttributes(typeof(DisplayNameAttribute), true).SingleOrDefault()) as DisplayNameAttribute)?.DisplayName;
 

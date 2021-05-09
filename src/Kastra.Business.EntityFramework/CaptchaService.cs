@@ -1,5 +1,5 @@
 ﻿using Kastra.Business.DTO;
-using Kastra.Core.Business;
+using Kastra.Core.Services.Contracts;
 using System;
 using System.Collections.Generic;
 using System.IO;

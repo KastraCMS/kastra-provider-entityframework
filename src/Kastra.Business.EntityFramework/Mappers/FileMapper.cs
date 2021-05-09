@@ -1,31 +1,48 @@
-using System;
-using System.Linq;
-using Kastra.Core;
-using Kastra.Core.Dto;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class FileMapper
+    public static class FileMapper
 	{
-        public static FileInfo ToFileInfo(this KastraFiles file)
+		/// <summary>
+		/// Convert File to File info.
+		/// </summary>
+		/// <param name="file">File</param>
+		/// <returns></returns>
+        public static FileInfo ToFileInfo(this File file)
 		{
-            FileInfo fileInfo = new FileInfo();
-			fileInfo.FileId = file.FileId;
-			fileInfo.Name = file.Name;
-            fileInfo.Path = file.Path;
-
-			return fileInfo;
+			if (file is null)
+            {
+				return null;
+            }
+ 
+			return new FileInfo()
+			{
+				FileId = file.FileId,
+				Name = file.Name,
+				Path = file.Path
+			};
 		}
 
-		public static KastraFiles ToKastraFile(this FileInfo fileInfo)
+		/// <summary>
+		/// Convert FileInfo to File.
+		/// </summary>
+		/// <param name="fileInfo">File info</param>
+		/// <returns>File</returns>
+		public static File ToFile(this FileInfo fileInfo)
 		{
-			KastraFiles file = new KastraFiles();
-			file.FileId = fileInfo.FileId;
-            file.Name = fileInfo.Name;
-            file.Path = fileInfo.Path;
+			if (fileInfo is null)
+            {
+				return null;
+            }
 
-			return file;
+			return new File()
+			{
+				FileId = fileInfo.FileId,
+				Name = fileInfo.Name,
+				Path = fileInfo.Path
+			};
 		}
 	}
 }

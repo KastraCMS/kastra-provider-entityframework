@@ -4,26 +4,27 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kastra.Business.Mappers;
-using Kastra.Core.Business;
+using Kastra.Core.Services.Contracts;
 using Kastra.Core.Configuration;
+using Dto = Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework;
-using Kastra.DAL.EntityFramework.Models;
+using Models = Kastra.DAL.EntityFramework.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace Kastra.Business
 {
     public class FileManager : IFileManager
     {
-        private KastraContext _dbContext;
+        private KastraDbContext _dbContext;
         private readonly AppSettings _appSettings;
 
-        public FileManager(KastraContext dbContext, IParameterManager parameterManager, IConfiguration configuration)
+        public FileManager(KastraDbContext dbContext, IConfiguration configuration)
         {
             _appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
             _dbContext = dbContext;
         }
 
-        public void AddFile(Core.Dto.FileInfo file, Stream stream)
+        public void AddFile(Dto.FileInfo file, Stream stream)
         {
             if (stream is null)
             {
@@ -52,7 +53,7 @@ namespace Kastra.Business
             try
             {
                 // Save file
-                using (FileStream fileStream = File.Create(filePath, (int)stream.Length))
+                using (FileStream fileStream = System.IO.File.Create(filePath, (int)stream.Length))
                 {
                     byte[] bytesInStream = new byte[stream.Length];
                     stream.Read(bytesInStream, 0, bytesInStream.Length);    
@@ -60,19 +61,20 @@ namespace Kastra.Business
                 }
 
                 // Save file in database
-                _dbContext.KastraFiles.Add(file.ToKastraFile());
+                _dbContext.KastraFiles.Add(file.ToFile());
                 _dbContext.SaveChanges();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 File.Delete(filePath);
-                throw e;
+
+                throw;
             }
         }
 
         public void DeleteFile(Guid fileId)
-        {   
-            KastraFiles file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
+        {
+            Models.File file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
 
             if (file is null)
             {
@@ -82,7 +84,7 @@ namespace Kastra.Business
             // Get file path
             string filePath = GetFilePath(file.ToFileInfo());
 
-            File.Delete(filePath);
+            System.IO.File.Delete(filePath);
 
             _dbContext.KastraFiles.Remove(file);
             _dbContext.SaveChanges();
@@ -90,9 +92,11 @@ namespace Kastra.Business
 
         public byte[] DownloadFileByGuid(Guid fileId)
         {
-            Core.Dto.FileInfo file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId)?.ToFileInfo();
+            Dto.FileInfo file = _dbContext.KastraFiles
+                .SingleOrDefault(f => f.FileId == fileId)
+                .ToFileInfo();
 
-            if (file == null)
+            if (file is null)
             {
                 throw new Exception($"{nameof(fileId)} not found");
             }
@@ -100,31 +104,33 @@ namespace Kastra.Business
             return File.ReadAllBytes(GetFilePath(file));
         }
 
-        public Core.Dto.FileInfo GetFile(Guid fileId)
+        public Dto.FileInfo GetFile(Guid fileId)
         {
-            KastraFiles file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
-
-            return file?.ToFileInfo();
+            return _dbContext.KastraFiles
+                .SingleOrDefault(f => f.FileId == fileId)
+                .ToFileInfo();
         }
 
-        public IList<Core.Dto.FileInfo> GetFilesByPath(string path)
+        public IList<Core.DTO.FileInfo> GetFilesByPath(string path)
         {
             if (string.IsNullOrEmpty(path))
             {
                 throw new ArgumentNullException(nameof(path));
             }
 
-            IList<Core.Dto.FileInfo> filesInfo = null;
-            List<KastraFiles> files = _dbContext.KastraFiles.Where(f => f.Path == path).ToList();
+            IList<Dto.FileInfo> filesInfo = null;
+            List<Models.File> files = _dbContext.KastraFiles
+                .Where(f => f.Path == path)
+                .ToList();
             
-            if (files == null)
+            if (files is null)
             {
                 return null;
             }
 
-            filesInfo = new List<Core.Dto.FileInfo>(files.Count);
+            filesInfo = new List<Dto.FileInfo>(files.Count);
 
-            foreach (KastraFiles file in files)
+            foreach (Models.File file in files)
             {
                 filesInfo.Add(file.ToFileInfo());
             }
@@ -139,12 +145,12 @@ namespace Kastra.Business
         /// </summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        protected string GetFilePath(Core.Dto.FileInfo file)
+        protected string GetFilePath(Dto.FileInfo file)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(_appSettings.Configuration.FileDirectoryPath.TrimEnd(Path.DirectorySeparatorChar));
             sb.Append(Path.DirectorySeparatorChar);
-            sb.Append(file.Path.Replace("..", String.Empty));
+            sb.Append(file.Path.Replace("..", string.Empty));
             sb.Append(Path.DirectorySeparatorChar);
             sb.Append(Path.GetFileName(file.Name));
 

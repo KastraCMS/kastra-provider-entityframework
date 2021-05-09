@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Kastra.Core.Configuration;
 using Kastra.Core.Modules;
+using Kastra.Core.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace Kastra.DAL.EntityFramework
 {
@@ -10,8 +12,14 @@ namespace Kastra.DAL.EntityFramework
     {
         public void SetDependencyInjections(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<KastraContext>(options =>
+            // Add database context.
+            services.AddDbContext<KastraDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+            // Add identity
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddEntityFrameworkStores<KastraDbContext>()
+                .AddDefaultTokenProviders();
 
             // Check if the database should be updated automatically
             AppSettings appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
@@ -35,7 +43,7 @@ namespace Kastra.DAL.EntityFramework
         {
             using(ServiceProvider serviceProvider = services.BuildServiceProvider())
             {
-                using (var context = serviceProvider.GetService<KastraContext>())
+                using (var context = serviceProvider.GetService<KastraDbContext>())
                 {
                     context.Database.Migrate();
                 }

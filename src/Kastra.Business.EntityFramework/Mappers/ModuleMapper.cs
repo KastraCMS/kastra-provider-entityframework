@@ -1,46 +1,70 @@
-﻿using System;
-using System.Linq;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using System.Linq;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class ModuleMapper
+    public static class ModuleMapper
 	{
-		public static ModuleInfo ToModuleInfo(this KastraModules module, Boolean includeChildren = false)
+		/// <summary>
+		/// Convert Module to ModuleInfo.
+		/// </summary>
+		/// <param name="module">Module</param>
+		/// <param name="includePermissions">Convert permission list</param>
+		/// <returns>Module info</returns>
+		public static ModuleInfo ToModuleInfo(this Module module, bool includePermissions = false)
 		{
-			ModuleInfo moduleInfo = new ModuleInfo();
-			moduleInfo.ModuleId = module.ModuleId;
-			moduleInfo.Name = module.Name;
-			moduleInfo.PageId = module.PageId;
-			moduleInfo.PlaceId = module.PlaceId;
-			moduleInfo.ModuleDefId = module.ModuleDefId;
-			moduleInfo.IsDisabled = module.IsDisabled;
+			var moduleInfo = new ModuleInfo()
+			{
+				ModuleId = module.ModuleId,
+				Name = module.Name,
+				PageId = module.PageId,
+				PlaceId = module.PlaceId,
+				ModuleDefId = module.ModuleDefinitionId,
+				IsDisabled = module.IsDisabled
+			};
 
-            if(module.ModuleDef != null)
-			    moduleInfo.ModuleDefinition = ModuleDefinitionMapper.ToModuleDefinitionInfo(module.ModuleDef, false, true);
+            if(module.ModuleDefinition is not null)
+            {
+			    moduleInfo.ModuleDefinition = module.ModuleDefinition.ToModuleDefinitionInfo(false, true);
+            }
 
-            if (module.Place != null)
-			    moduleInfo.Place = PlaceMapper.ToPlaceInfo(module.Place);
+            if (module.Place is not null)
+            {
+			    moduleInfo.Place = module.Place.ToPlaceInfo();
+            }
 
-            if(includeChildren)
-			    moduleInfo.ModulePermissions = module.KastraModulePermissions.Select(mp => ModulePermissionMapper.ToModulePermissionInfo(mp, false))?.ToList();
+            if(includePermissions && module.ModulePermissions is not null)
+            {
+			    moduleInfo.ModulePermissions = module.ModulePermissions
+					.Select(mp => mp.ToModulePermissionInfo())
+					.ToList();
+            }
 
 			return moduleInfo;
 		}
 
-		public static KastraModules ToKastraModule(this ModuleInfo moduleInfo)
+		/// <summary>
+		/// Convert ModuleInfo to Module.
+		/// </summary>
+		/// <param name="moduleInfo">Module info</param>
+		/// <returns>Module</returns>
+		public static Module ToModule(this ModuleInfo moduleInfo)
 		{
-			KastraModules module = new KastraModules();
-			module.ModuleId = moduleInfo.ModuleId;
-			module.ModuleDefId = moduleInfo.ModuleDefId;
-			module.PageId = moduleInfo.PageId;
-			module.PlaceId = moduleInfo.PlaceId;
-			module.Name = moduleInfo.Name;
-			module.IsDisabled = moduleInfo.IsDisabled;
+			if (moduleInfo is null)
+            {
+				return null;
+            }
 
-			return module;
+			return new Module()
+			{
+				ModuleId = moduleInfo.ModuleId,
+				ModuleDefinitionId = moduleInfo.ModuleDefId,
+				PageId = moduleInfo.PageId,
+				PlaceId = moduleInfo.PlaceId,
+				Name = moduleInfo.Name,
+				IsDisabled = moduleInfo.IsDisabled
+			};
 		}
 	}
 }

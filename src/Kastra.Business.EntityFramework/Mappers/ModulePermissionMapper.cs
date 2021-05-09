@@ -1,36 +1,50 @@
-﻿using System;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class ModulePermissionMapper
+    public static class ModulePermissionMapper
 	{
-		public static ModulePermissionInfo ToModulePermissionInfo(this KastraModulePermissions modulePermission, Boolean includeChildren = false)
+		/// <summary>
+		/// Convert ModulePermission to ModulePermissionInfo.
+		/// </summary>
+		/// <param name="modulePermission">Module permission</param>
+		/// <returns>Module permission info</returns>
+		public static ModulePermissionInfo ToModulePermissionInfo(this ModulePermission modulePermission)
 		{
-			ModulePermissionInfo modulePermissionInfo = new ModulePermissionInfo();
-			modulePermissionInfo.ModulePermissionId = modulePermission.ModulePermissionId;
-			modulePermissionInfo.ModuleId = modulePermission.ModuleId;
-			modulePermissionInfo.PermissionId = modulePermission.PermissionId;
+			if (modulePermission is null)
+            {
+				return null;
+            }
 
-            if(modulePermission.Module != null)
-			    modulePermissionInfo.Module = ModuleMapper.ToModuleInfo(modulePermission.Module);
-
-            if(modulePermission.Permission != null)
-			    modulePermissionInfo.Permission = PermissionMapper.ToPermissionInfo(modulePermission.Permission);
-
-			return modulePermissionInfo;
+			return new ModulePermissionInfo()
+			{
+				ModulePermissionId = modulePermission.ModulePermissionId,
+				ModuleId = modulePermission.ModuleId,
+				PermissionId = modulePermission.PermissionId,
+			    Module = modulePermission.Module.ToModuleInfo(),
+			    Permission = modulePermission.Permission.ToPermissionInfo(),
+			};
 		}
 
-		public static KastraModulePermissions ToKastraModulePermission(this ModulePermissionInfo modulePermissionInfo)
+		/// <summary>
+		/// Convert ModulePermissionInfo to ModulePermission.
+		/// </summary>
+		/// <param name="modulePermissionInfo">Module permission info</param>
+		/// <returns>Module permission</returns>
+		public static ModulePermission ToModulePermission(this ModulePermissionInfo modulePermissionInfo)
 		{
-			KastraModulePermissions modulePermission = new KastraModulePermissions();
-			modulePermission.ModulePermissionId = modulePermissionInfo.ModulePermissionId;
-			modulePermission.ModuleId = modulePermissionInfo.ModuleId;
-			modulePermission.PermissionId = modulePermissionInfo.PermissionId;
+			if (modulePermissionInfo is null)
+            {
+				return null;
+            }
 
-			return modulePermission;
+			return new ModulePermission()
+			{
+				ModulePermissionId = modulePermissionInfo.ModulePermissionId,
+				ModuleId = modulePermissionInfo.ModuleId,
+				PermissionId = modulePermissionInfo.PermissionId
+			};
 		}
 	}
 }

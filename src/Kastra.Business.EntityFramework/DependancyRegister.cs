@@ -1,4 +1,4 @@
-﻿using Kastra.Core.Business;
+﻿using Kastra.Core.Services.Contracts;
 using Kastra.Core.Modules;
 using Kastra.Core.Services;
 using Microsoft.Extensions.Configuration;

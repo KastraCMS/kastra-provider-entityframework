@@ -1,47 +1,62 @@
-﻿using System;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class PageMapper
+    public static class PageMapper
 	{
-		public static PageInfo ToPageInfo(this KastraPages page, Boolean includeChildren = false)
+		/// <summary>
+		/// Convert Page to PageInfo.
+		/// </summary>
+		/// <param name="page">Page</param>
+		/// <param name="includeTemplatePages">Convert template page list</param>
+		/// <param name="includeTemplatePlaces">Convert template place list</param>
+		/// <returns>Page info</returns>
+		public static PageInfo ToPageInfo(
+			this Page page, 
+			bool includeTemplatePages = false, 
+			bool includeTemplatePlaces = false)
 		{
-			if (page == null)
+			if (page is null)
+            {
 				return null;
+            }
 
-			PageInfo pageInfo = new PageInfo();
-			pageInfo.PageId = page.PageId;
-			pageInfo.Title = page.Title;
-			pageInfo.KeyName = page.KeyName;
-			pageInfo.PageTemplateId = page.PageTemplateId;
-            pageInfo.MetaKeywords = page.MetaKeywords;
-            pageInfo.MetaDescription = page.MetaDescription;
-            pageInfo.MetaRobot = page.MetaRobot;
-
-            if(page.PageTemplate != null)
-                pageInfo.PageTemplate = TemplateMapper.ToTemplateInfo(page.PageTemplate, includeChildren);
-
-			return pageInfo;
+			return new PageInfo()
+			{
+				PageId = page.PageId,
+				Title = page.Title,
+				KeyName = page.KeyName,
+				PageTemplateId = page.PageTemplateId,
+				MetaKeywords = page.MetaKeywords,
+				MetaDescription = page.MetaDescription,
+				MetaRobot = page.MetaRobot,
+				PageTemplate = page.PageTemplate.ToTemplateInfo(includeTemplatePages, includeTemplatePlaces)
+			};
 		}
 
-		public static KastraPages ToKastraPage(this PageInfo pageInfo)
+		/// <summary>
+		/// Convert PageInfo to Page.
+		/// </summary>
+		/// <param name="pageInfo">Page info</param>
+		/// <returns>Page</returns>
+		public static Page ToPage(this PageInfo pageInfo)
 		{
-			if (pageInfo == null)
+			if (pageInfo is null)
+            {
 				return null;
+            }
 
-			KastraPages page = new KastraPages();
-			page.PageId = pageInfo.PageId;
-			page.Title = pageInfo.Title;
-			page.KeyName = pageInfo.KeyName;
-			page.PageTemplateId = pageInfo.PageTemplateId;
-			page.MetaKeywords = pageInfo.MetaKeywords;
-			page.MetaDescription = pageInfo.MetaDescription;
-			page.MetaRobot = pageInfo.MetaRobot;
-
-			return page;
+			return new Page()
+			{
+				PageId = pageInfo.PageId,
+				Title = pageInfo.Title,
+				KeyName = pageInfo.KeyName,
+				PageTemplateId = pageInfo.PageTemplateId,
+				MetaKeywords = pageInfo.MetaKeywords,
+				MetaDescription = pageInfo.MetaDescription,
+				MetaRobot = pageInfo.MetaRobot
+			};
 		}
 	}
 }

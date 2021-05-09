@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kastra.Core.Business;
+using Kastra.Core.Services.Contracts;
 using Kastra.Core.Constants;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
@@ -10,9 +10,9 @@ namespace Kastra.Business
 {
     public class ApplicationManager : IApplicationManager
     {
-        private readonly KastraContext _dbContext;
+        private readonly KastraDbContext _dbContext;
 
-        public ApplicationManager(KastraContext dbContext)
+        public ApplicationManager(KastraDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -29,13 +29,13 @@ namespace Kastra.Business
 
         public void InstallDefaultPage()
         {
-            KastraPages home = _dbContext.KastraPages.SingleOrDefault(p => p.KeyName.ToLower() == "home");
-            KastraPageTemplates template = _dbContext.KastraPageTemplates
+            Page home = _dbContext.KastraPages.SingleOrDefault(p => p.KeyName.ToLower() == "home");
+            PageTemplate template = _dbContext.KastraPageTemplates
                                                 .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
 
             if(home == null && template != null)
             {
-                home = new KastraPages();
+                home = new Page();
                 home.KeyName = "home";
                 home.MetaDescription = "My home page";
                 home.PageTemplateId = template.PageTemplateId;
@@ -51,10 +51,10 @@ namespace Kastra.Business
 
         public void InstallDefaultTemplate()
         {
-            KastraPlaces place = null;
+            Place place = null;
 
             // Install default template
-            KastraPageTemplates template = _dbContext.KastraPageTemplates
+            PageTemplate template = _dbContext.KastraPageTemplates
                                                 .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
 
             if (template != null)
@@ -62,26 +62,26 @@ namespace Kastra.Business
                 return;
             }
 
-            template = new KastraPageTemplates();
+            template = new PageTemplate();
             template.KeyName = SiteConfiguration.DefaultPageTemplateKeyName;
             template.Name = "Default template";
-            template.ModelClass = "Kastra.Web.Models.Template.DefaultTemplateViewModel";
+            template.ModelClass = "Kastra.Server.Models.Template.DefaultTemplateViewModel";
             template.ViewPath = "Page";
 
-            template.KastraPlaces = new List<KastraPlaces>();
+            template.KastraPlaces = new List<Place>();
 
             // Add places
-            place = new KastraPlaces();
+            place = new Place();
             place.KeyName = "Header";
             
             template.KastraPlaces.Add(place);
 
-            place = new KastraPlaces();
+            place = new Place();
             place.KeyName = "Body";
             
             template.KastraPlaces.Add(place);
 
-            place = new KastraPlaces();
+            place = new Place();
             place.KeyName = "Footer";
             
             template.KastraPlaces.Add(place);
@@ -89,7 +89,7 @@ namespace Kastra.Business
             _dbContext.KastraPageTemplates.Add(template);
 
             // Add home template
-            KastraPageTemplates homeTemplate = _dbContext.KastraPageTemplates
+            PageTemplate homeTemplate = _dbContext.KastraPageTemplates
                                                 .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
 
             if (homeTemplate != null)
@@ -97,26 +97,26 @@ namespace Kastra.Business
                 return;
             }
 
-            homeTemplate = new KastraPageTemplates();
+            homeTemplate = new PageTemplate();
             homeTemplate.KeyName = "HomeTemplate";
             homeTemplate.Name = "Home template";
-            homeTemplate.ModelClass = "Kastra.Web.Models.Template.HomeTemplateViewModel";
+            homeTemplate.ModelClass = "Kastra.Server.Models.Template.HomeTemplateViewModel";
             homeTemplate.ViewPath = "Page";
 
-            homeTemplate.KastraPlaces = new List<KastraPlaces>();
+            homeTemplate.KastraPlaces = new List<Place>();
 
             // Add places
-            place = new KastraPlaces();
+            place = new Place();
             place.KeyName = "Header";
             
             homeTemplate.KastraPlaces.Add(place);
 
-            place = new KastraPlaces();
+            place = new Place();
             place.KeyName = "Body";
             
             homeTemplate.KastraPlaces.Add(place);
 
-            place = new KastraPlaces();
+            place = new Place();
             place.KeyName = "Footer";
             
             homeTemplate.KastraPlaces.Add(place);
@@ -129,17 +129,17 @@ namespace Kastra.Business
         public void InstallDefaultPermissions()
         {
             // Granted permission
-            KastraPermissions permission = new KastraPermissions();
+            Permission permission = new Permission();
             permission.Name = ModuleConfiguration.GrantedAccessPermission;
             _dbContext.KastraPermissions.Add(permission);
 
             // Read
-            permission = new KastraPermissions();
+            permission = new Permission();
             permission.Name = ModuleConfiguration.ReadPermission;
             _dbContext.KastraPermissions.Add(permission);
 
             // Edit
-            permission = new KastraPermissions();
+            permission = new Permission();
             permission.Name = ModuleConfiguration.EditPermission;
             _dbContext.KastraPermissions.Add(permission);
 
@@ -148,11 +148,11 @@ namespace Kastra.Business
 
         public void InstallDefaultParameters()
         {
-            KastraParameters theme = _dbContext.KastraParameters.SingleOrDefault(p => p.Key == "Theme");
+            Parameter theme = _dbContext.KastraParameters.SingleOrDefault(p => p.Key == "Theme");
 
             if(theme == null)
             {
-                theme = new KastraParameters();
+                theme = new Parameter();
                 theme.Key = "Theme";
                 theme.Value = "default";
                 _dbContext.Add(theme);
@@ -173,12 +173,12 @@ namespace Kastra.Business
                 return;
             }
 
-            KastraMailTemplate mailTemplate = null;
-            List<KastraMailTemplate> mailTemplates = new List<KastraMailTemplate>();
+            MailTemplate mailTemplate = null;
+            List<MailTemplate> mailTemplates = new List<MailTemplate>();
 
             if (!_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == "account.confirmregistration"))
             {
-                mailTemplate = new KastraMailTemplate() {
+                mailTemplate = new MailTemplate() {
                     Keyname = "account.confirmregistration",
                     Subject = "Confirm your account",
                     Message = "Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>"
@@ -189,7 +189,7 @@ namespace Kastra.Business
             
             if (!_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == "account.resetpassword"))
             {
-                mailTemplate = new KastraMailTemplate() {
+                mailTemplate = new MailTemplate() {
                     Keyname = "account.resetpassword",
                     Subject = "Reset Password",
                     Message = "Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>"

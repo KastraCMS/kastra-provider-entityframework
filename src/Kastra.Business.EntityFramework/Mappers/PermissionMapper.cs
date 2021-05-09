@@ -1,35 +1,55 @@
-﻿using System;
-using System.Linq;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using System.Linq;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class PermissionMapper
+    public static class PermissionMapper
 	{
-		public static PermissionInfo ToPermissionInfo(this KastraPermissions permission, Boolean includeChildren = false)
+		/// <summary>
+		/// Convert Permission to PermissionInfo.
+		/// </summary>
+		/// <param name="permission">Permission</param>
+		/// <param name="includeModulePermissions">Convert the module permission list</param>
+		/// <returns>Permission info</returns>
+		public static PermissionInfo ToPermissionInfo(this Permission permission, bool includeModulePermissions = false)
 		{
-			PermissionInfo permissionInfo = new PermissionInfo();
-			permissionInfo.PermissionId = permission.PermissionId;
-			permissionInfo.Name = permission.Name;
+			if (permission is null)
+            {
+				return null;
+            }
 
-            if(includeChildren)
-			    permissionInfo.ModulePermissions = permission.KastraModulePermissions.Select(mp => ModulePermissionMapper.ToModulePermissionInfo(mp, false)).ToList();
+			var permissionInfo = new PermissionInfo()
+			{
+				PermissionId = permission.PermissionId,
+				Name = permission.Name
+			};
+
+            if(includeModulePermissions)
+            {
+			    permissionInfo.ModulePermissions = permission.KastraModulePermissions.Select(mp => mp.ToModulePermissionInfo()).ToList();
+            }
 
 			return permissionInfo;
 		}
 
-        public static KastraPermissions ToKastraPermission(this PermissionInfo permissionInfo)
+		/// <summary>
+		/// Convert PermissionInfo to Permission.
+		/// </summary>
+		/// <param name="permissionInfo">Permission info</param>
+		/// <returns>Permission</returns>
+        public static Permission ToPermission(this PermissionInfo permissionInfo)
         {
-            if (permissionInfo == null)
+            if (permissionInfo is null)
+            {
                 return null;
+            }
 
-            KastraPermissions permission = new KastraPermissions();
-            permission.PermissionId = permissionInfo.PermissionId;
-            permission.Name = permissionInfo.Name;
-
-            return permission;
+            return new Permission()
+			{
+				PermissionId = permissionInfo.PermissionId,
+				Name = permissionInfo.Name
+			};
         }
 	}
 }

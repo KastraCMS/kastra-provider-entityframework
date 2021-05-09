@@ -1,38 +1,61 @@
-﻿using System;
-using System.Linq;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using System.Linq;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class PlaceMapper
+    public static class PlaceMapper
 	{
-        public static PlaceInfo ToPlaceInfo(this KastraPlaces place, Boolean includeChildren = false)
+		/// <summary>
+		/// Convert Place to PlaceInfo.
+		/// </summary>
+		/// <param name="place">Place</param>
+		/// <param name="includeModules">Convert the module list</param>
+		/// <returns></returns>
+        public static PlaceInfo ToPlaceInfo(this Place place, bool includeModules = false)
 		{
-            PlaceInfo placeInfo = new PlaceInfo();
-			placeInfo.PlaceId = place.PlaceId;
-			placeInfo.KeyName = place.KeyName;
-			placeInfo.PageTemplateId = place.PageTemplateId;
-			placeInfo.ModuleId = place.ModuleId;
+			if (place is null)
+            {
+				return null;
+            }
 
-            if(includeChildren)
-			    placeInfo.Modules = place.KastraModules.Select(m => ModuleMapper.ToModuleInfo(m, true))?.ToList();
+			var placeInfo = new PlaceInfo()
+			{
+				PlaceId = place.PlaceId,
+				KeyName = place.KeyName,
+				PageTemplateId = place.PageTemplateId,
+				ModuleId = place.ModuleId,
+				Template = place.PageTemplate.ToTemplateInfo()
+			};
 
-            if(place.PageTemplate != null)
-			    placeInfo.Template = TemplateMapper.ToTemplateInfo(place.PageTemplate);
+			if (includeModules)
+            {
+			    placeInfo.Modules = place.KastraModules
+					.Select(m => m.ToModuleInfo(true))
+					.ToList();
+            }
 
 			return placeInfo;
 		}
 
-		public static KastraPlaces ToKastraPlace(this PlaceInfo placeInfo)
+		/// <summary>
+		/// Convert PlaceInfo to Place.
+		/// </summary>
+		/// <param name="placeInfo">Place info</param>
+		/// <returns>Place</returns>
+		public static Place ToPlace(this PlaceInfo placeInfo)
 		{
-			KastraPlaces place = new KastraPlaces();
-			place.PlaceId = placeInfo.PlaceId;
-			place.KeyName = placeInfo.KeyName;
-			place.PageTemplateId = placeInfo.PageTemplateId;
+			if (placeInfo is null)
+            {
+				return null;
+            }
 
-			return place;
+			return new Place()
+			{
+				PlaceId = placeInfo.PlaceId,
+				KeyName = placeInfo.KeyName,
+				PageTemplateId = placeInfo.PageTemplateId
+			};
 		}
 	}
 }

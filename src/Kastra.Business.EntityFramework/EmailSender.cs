@@ -2,8 +2,8 @@
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
-using Kastra.Core.Business;
-using Kastra.Core.Dto;
+using Kastra.Core.Services.Contracts;
+using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Microsoft.Extensions.Logging;
 

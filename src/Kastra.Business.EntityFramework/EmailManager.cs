@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kastra.Business.Mappers;
-using Kastra.Core.Business;
-using Kastra.Core.Dto;
+using Kastra.Core.Services.Contracts;
+using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
@@ -13,11 +13,11 @@ namespace Kastra.Business
 {
     public class EmailManager : IEmailManager
 	{
-		private readonly KastraContext _dbContext;
+		private readonly KastraDbContext _dbContext;
 		private readonly CacheEngine _cacheEngine;
         private readonly IEmailSender _emailSender;
 
-        public EmailManager(KastraContext dbContext, CacheEngine cacheEngine, IEmailSender emailSender)
+        public EmailManager(KastraDbContext dbContext, CacheEngine cacheEngine, IEmailSender emailSender)
 		{
             _cacheEngine = cacheEngine;
 			_dbContext = dbContext;
@@ -36,7 +36,7 @@ namespace Kastra.Business
                 throw new ArgumentException("The keyname already exists");
             }
 
-            KastraMailTemplate mailTemplate = new KastraMailTemplate()
+            MailTemplate mailTemplate = new MailTemplate()
             {
                 Keyname = keyname,
                 Subject = subject,
@@ -56,7 +56,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(keyname));
             }
 
-            KastraMailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == keyname);
+            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == keyname);
 
             if (mailTemplate == null)
             {
@@ -96,7 +96,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(keyname));
             }
 
-            KastraMailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == keyname);
+            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == keyname);
 
             if (mailTemplate == null)
             {
@@ -130,7 +130,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(templateName));
             }
 
-            KastraMailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == templateName);
+            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == templateName);
 
             if (mailTemplate == null)
             {
@@ -155,7 +155,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(templateName));
             }
 
-            KastraMailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == templateName);
+            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == templateName);
 
             if (mailTemplate == null)
             {
@@ -175,7 +175,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(mailTemplateInfo));
             }
 
-            KastraMailTemplate mailTemplate = _dbContext.KastraMailTemplates
+            MailTemplate mailTemplate = _dbContext.KastraMailTemplates
                                                 .SingleOrDefault(mt => mt.Keyname == mailTemplateInfo.Keyname);
 
             if (mailTemplate == null)

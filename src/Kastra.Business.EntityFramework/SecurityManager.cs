@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kastra.Business.Mappers;
-using Kastra.Core;
-using Kastra.Core.Business;
-using Kastra.Core.Dto;
+using Kastra.Core.Services.Contracts;
+using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
@@ -15,12 +14,12 @@ namespace Kastra.Business
     {
 		#region Private members
 
-		private readonly KastraContext _dbContext = null;
+		private readonly KastraDbContext _dbContext = null;
 		private readonly CacheEngine _cacheEngine = null;
 
 		#endregion
 
-		public SecurityManager(KastraContext dbContext, CacheEngine cacheEngine)
+		public SecurityManager(KastraDbContext dbContext, CacheEngine cacheEngine)
         {
 			_dbContext = dbContext;
 			_cacheEngine = cacheEngine;
@@ -38,7 +37,7 @@ namespace Kastra.Business
 
 		public Boolean SaveModulePermission(ModulePermissionInfo modulePermissionInfo)
 		{
-			KastraModulePermissions modulePermission = modulePermissionInfo.ToKastraModulePermission();
+			ModulePermission modulePermission = modulePermissionInfo.ToModulePermission();
 
 			if (modulePermissionInfo.ModulePermissionId > 0)
 				_dbContext.KastraModulePermissions.Update(modulePermission);
@@ -58,7 +57,7 @@ namespace Kastra.Business
 			if (modulePermissionId < 1)
 				return false;
 
-			KastraModulePermissions modulePermission = _dbContext.KastraModulePermissions.SingleOrDefault(p => p.ModulePermissionId == modulePermissionId);
+			ModulePermission modulePermission = _dbContext.KastraModulePermissions.SingleOrDefault(p => p.ModulePermissionId == modulePermissionId);
 
 			if (modulePermission == null)
 				return false;
@@ -77,7 +76,7 @@ namespace Kastra.Business
 			if (moduleId < 1)
 				return false;
 
-			KastraModulePermissions modulePermission = _dbContext.KastraModulePermissions.SingleOrDefault(p => p.ModuleId == moduleId && p.PermissionId == permissionId);
+			ModulePermission modulePermission = _dbContext.KastraModulePermissions.SingleOrDefault(p => p.ModuleId == moduleId && p.PermissionId == permissionId);
 
 			if (modulePermission == null)
 				return false;
@@ -105,7 +104,7 @@ namespace Kastra.Business
 
         public bool SavePermission(PermissionInfo permissionInfo)
         {
-			KastraPermissions permission = permissionInfo.ToKastraPermission();
+			Permission permission = permissionInfo.ToPermission();
 
 			if (permissionInfo.PermissionId > 0)
 				_dbContext.KastraPermissions.Update(permission);
@@ -125,7 +124,7 @@ namespace Kastra.Business
 
         public Boolean DeletePermission(Int32 permissionId)
         {
-			KastraPermissions permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.PermissionId == permissionId);
+			Permission permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.PermissionId == permissionId);
 
 			if (permission == null)
 				return false;
@@ -141,14 +140,14 @@ namespace Kastra.Business
 
         public PermissionInfo GetPermissionById(Int32 permissionId)
         {
-            KastraPermissions permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.PermissionId == permissionId);
+            Permission permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.PermissionId == permissionId);
 
             return permission?.ToPermissionInfo();
         }
 
         public PermissionInfo GetPermissionByName(String name)
         {
-            KastraPermissions permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.Name == name);
+            Permission permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.Name == name);
 
 			return permission?.ToPermissionInfo();
         }

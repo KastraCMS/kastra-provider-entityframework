@@ -1,38 +1,51 @@
-﻿using System;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class ModuleControlMapper
+    public static class ModuleControlMapper
 	{
-		public static ModuleControlInfo ToModuleControlInfo(this KastraModuleControls moduleControl)
+		/// <summary>
+		/// Convert ModuleControl to ModuleControleInfo.
+		/// </summary>
+		/// <param name="moduleControl">Module control</param>
+		/// <returns>Module control info</returns>
+		public static ModuleControlInfo ToModuleControlInfo(this ModuleControl moduleControl)
 		{
-			if (moduleControl == null)
+			if (moduleControl is null)
+			{
 				return null;
-            
-			ModuleControlInfo moduleControlInfo = new ModuleControlInfo();
-			moduleControlInfo.ModuleControlId = moduleControl.ModuleControlId;
-			moduleControlInfo.KeyName = moduleControl.KeyName;
-			moduleControlInfo.ModuleDefId = moduleControl.ModuleDefId;
-			moduleControlInfo.Path = moduleControl.Path;
+			}
 
-            if(moduleControl.ModuleDef != null)
-			    moduleControlInfo.ModuleDefinition = ModuleDefinitionMapper.ToModuleDefinitionInfo(moduleControl.ModuleDef);
-
-			return moduleControlInfo;
+			return new ModuleControlInfo()
+			{
+				ModuleControlId = moduleControl.ModuleControlId,
+				KeyName = moduleControl.KeyName,
+				ModuleDefId = moduleControl.ModuleDefinitionId,
+				Path = moduleControl.Path,
+				ModuleDefinition = moduleControl.ModuleDefinition.ToModuleDefinitionInfo()
+			};
 		}
 
-		public static KastraModuleControls ToKastraModuleControl(this ModuleControlInfo moduleControlInfo)
+		/// <summary>
+		/// Convert ModuleControlInfo to ModuleControl.
+		/// </summary>
+		/// <param name="moduleControlInfo">Module control info</param>
+		/// <returns>Module control</returns>
+		public static ModuleControl ToModuleControl(this ModuleControlInfo moduleControlInfo)
 		{
-			KastraModuleControls moduleControl = new KastraModuleControls();
-			moduleControl.ModuleControlId = moduleControlInfo.ModuleControlId;
-			moduleControl.ModuleDefId = moduleControlInfo.ModuleDefId;
-			moduleControl.KeyName = moduleControlInfo.KeyName;
-			moduleControl.Path = moduleControlInfo.Path;
+			if (moduleControlInfo is null)
+            {
+				return null;
+            }
 
-			return moduleControl;
+			return new ModuleControl()
+			{
+				ModuleControlId = moduleControlInfo.ModuleControlId,
+				ModuleDefinitionId = moduleControlInfo.ModuleDefId,
+				KeyName = moduleControlInfo.KeyName,
+				Path = moduleControlInfo.Path
+			};
 		}
 	}
 }

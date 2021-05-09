@@ -1,43 +1,76 @@
-﻿using System;
-using System.Linq;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using System.Linq;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class ModuleDefinitionMapper
+    public static class ModuleDefinitionMapper
 	{
-		public static ModuleDefinitionInfo ToModuleDefinitionInfo(this KastraModuleDefinitions moduleDefinition, Boolean includeModules = false, Boolean includeModuleControls = false)
+		/// <summary>
+		/// Convert ModuleDefinition to ModuleDefinitionInfo.
+		/// </summary>
+		/// <param name="moduleDefinition">Module definition</param>
+		/// <param name="includeModules">Convert module list</param>
+		/// <param name="includeModuleControls">Convert module control list</param>
+		/// <returns>Module definition info</returns>
+		public static ModuleDefinitionInfo ToModuleDefinitionInfo(
+			this ModuleDefinition moduleDefinition, 
+			bool includeModules = false, 
+			bool includeModuleControls = false)
 		{
-			ModuleDefinitionInfo moduleDefinitionInfo = new ModuleDefinitionInfo();
-			moduleDefinitionInfo.ModuleDefId = moduleDefinition.ModuleDefId;
-			moduleDefinitionInfo.KeyName = moduleDefinition.KeyName;
-			moduleDefinitionInfo.Name = moduleDefinition.Name;
-			moduleDefinitionInfo.Path = moduleDefinition.Path;
-            moduleDefinitionInfo.Namespace = moduleDefinition.Namespace;
-			moduleDefinitionInfo.Version = moduleDefinition.Version;
+			if (moduleDefinition is null)
+            {
+				return null;
+            }
 
-            if(includeModuleControls)
-				moduleDefinitionInfo.ModuleControls = moduleDefinition.KastraModuleControls.Select(mc => ModuleControlMapper.ToModuleControlInfo(mc)).ToList();
+			var moduleDefinitionInfo = new ModuleDefinitionInfo()
+			{
+				ModuleDefId = moduleDefinition.ModuleDefId,
+				KeyName = moduleDefinition.KeyName,
+				Name = moduleDefinition.Name,
+				Path = moduleDefinition.Path,
+				Namespace = moduleDefinition.Namespace,
+				Version = moduleDefinition.Version
+			};
 
-            if(includeModules)
-				moduleDefinitionInfo.Modules = moduleDefinition.KastraModules.Select(m => ModuleMapper.ToModuleInfo(m)).ToList();
+            if(includeModuleControls && moduleDefinition.ModuleControls is not null)
+            {
+				moduleDefinitionInfo.ModuleControls = moduleDefinition.ModuleControls
+					.Select(mc => mc.ToModuleControlInfo())
+					.ToList();
+            }
+
+            if(includeModules && moduleDefinition.Modules is not null)
+            {
+				moduleDefinitionInfo.Modules = moduleDefinition.Modules
+					.Select(m => m.ToModuleInfo())
+					.ToList();
+            }
             
 			return moduleDefinitionInfo;
 		}
 
-		public static KastraModuleDefinitions ToKastraModuleDefinition(this ModuleDefinitionInfo moduleDefinitionInfo)
+		/// <summary>
+		/// Convert ModuleDefinitionInfo to ModuleDefinition.
+		/// </summary>
+		/// <param name="moduleDefinitionInfo">Module definition info</param>
+		/// <returns>Module definition</returns>
+		public static ModuleDefinition ToModuleDefinition(this ModuleDefinitionInfo moduleDefinitionInfo)
 		{
-			KastraModuleDefinitions moduleDefinition = new KastraModuleDefinitions();
-			moduleDefinition.ModuleDefId = moduleDefinitionInfo.ModuleDefId;
-			moduleDefinition.KeyName = moduleDefinitionInfo.KeyName;
-			moduleDefinition.Name = moduleDefinitionInfo.Name;
-			moduleDefinition.Path = moduleDefinitionInfo.Path;
-            moduleDefinition.Namespace = moduleDefinitionInfo.Namespace;
-			moduleDefinition.Version = moduleDefinitionInfo.Version;
+			if (moduleDefinitionInfo is null)
+            {
+				return null;
+            }
 
-			return moduleDefinition;
+			return new ModuleDefinition()
+			{
+				ModuleDefId = moduleDefinitionInfo.ModuleDefId,
+				KeyName = moduleDefinitionInfo.KeyName,
+				Name = moduleDefinitionInfo.Name,
+				Path = moduleDefinitionInfo.Path,
+				Namespace = moduleDefinitionInfo.Namespace,
+				Version = moduleDefinitionInfo.Version
+			};
 		}
 	}
 }

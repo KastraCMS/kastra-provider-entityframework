@@ -1,40 +1,50 @@
-using Kastra.Core.Dto;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
     public static class MailTemplateMapper
 	{
-        public static MailTemplateInfo ToMailTemplateInfo(this KastraMailTemplate mailTemplate)
+        /// <summary>
+        /// Convert MailtTemplate to MailTemplateInfo.
+        /// </summary>
+        /// <param name="mailTemplate">Mail template</param>
+        /// <returns>Mail template info</returns>
+        public static MailTemplateInfo ToMailTemplateInfo(this MailTemplate mailTemplate)
 		{
             if (mailTemplate is null)
             {
                 return null;
             }
 
-            MailTemplateInfo mailTemplateInfo = new MailTemplateInfo();
-			mailTemplateInfo.MailtemplateId = mailTemplate.MailTemplateId;
-			mailTemplateInfo.Keyname = mailTemplate.Keyname;
-            mailTemplateInfo.Subject = mailTemplate.Subject;
-            mailTemplateInfo.Message = mailTemplate.Message;
-
-			return mailTemplateInfo;
+			return new MailTemplateInfo()
+            {
+                MailtemplateId = mailTemplate.MailTemplateId,
+                Keyname = mailTemplate.Keyname,
+                Subject = mailTemplate.Subject,
+                Message = mailTemplate.Message
+            };
 		}
 
-		public static KastraMailTemplate ToKastraMailTemplate(this MailTemplateInfo mailTemplateInfo)
+        /// <summary>
+        /// Convert MailTemplateInfo to MailTemplate.
+        /// </summary>
+        /// <param name="mailTemplateInfo">Mail template info</param>
+        /// <returns>Mail template</returns>
+		public static MailTemplate ToMailTemplate(this MailTemplateInfo mailTemplateInfo)
 		{
             if (mailTemplateInfo is null)
             {
                 return null;
             }
 
-            KastraMailTemplate mailTemplate = new KastraMailTemplate();
-			mailTemplate.MailTemplateId = mailTemplateInfo.MailtemplateId;
-            mailTemplate.Keyname = mailTemplateInfo.Keyname;
-            mailTemplate.Subject = mailTemplateInfo.Subject;
-            mailTemplate.Message = mailTemplateInfo.Message;
-
-			return mailTemplate;
+			return new MailTemplate()
+            {
+                MailTemplateId = mailTemplateInfo.MailtemplateId,
+                Keyname = mailTemplateInfo.Keyname,
+                Subject = mailTemplateInfo.Subject,
+                Message = mailTemplateInfo.Message
+            };
 		}
 	}
 }

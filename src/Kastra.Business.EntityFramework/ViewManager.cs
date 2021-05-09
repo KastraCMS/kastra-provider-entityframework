@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Kastra.Business.Mappers;
-using Kastra.Core.Business;
+using Kastra.Core.Services.Contracts;
 using Kastra.Core.Constants;
-using Kastra.Core.Dto;
+using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
@@ -15,12 +15,12 @@ namespace Kastra.Business
     {
         #region Private members
 
-        private readonly KastraContext _dbContext;
+        private readonly KastraDbContext _dbContext;
         private readonly CacheEngine _cacheEngine;
 
         #endregion
 
-        public ViewManager(KastraContext dbContext, CacheEngine cacheEngine)
+        public ViewManager(KastraDbContext dbContext, CacheEngine cacheEngine)
         {
             _dbContext = dbContext;
             _cacheEngine = cacheEngine;
@@ -30,12 +30,14 @@ namespace Kastra.Business
 
         public IList<PageInfo> GetPagesList()
         {
-            if (_dbContext == null)
+            if (_dbContext is null)
+            {
                 return null;
+            }
 
-            IList<PageInfo> pagesList = _dbContext.KastraPages.Select(p => PageMapper.ToPageInfo(p, false)).ToList();
-
-            return pagesList;
+            return _dbContext.KastraPages
+                .Select(p => p.ToPageInfo(false, false))
+                .ToList(); ;
         }
 
         public bool SavePage(PageInfo page)
@@ -43,19 +45,19 @@ namespace Kastra.Business
             if (page == null)
                 return false;
 
-            KastraPages currentPage =  _dbContext.KastraPages.SingleOrDefault(p => p.PageId == page.PageId);
+            Page currentPage =  _dbContext.KastraPages.SingleOrDefault(p => p.PageId == page.PageId);
 
             if(currentPage != null)
             {
                 if (currentPage.PageTemplateId != page.PageTemplateId)
                 {
                     // Get the modules of the page
-                    List<KastraModules> modules = _dbContext.KastraModules
+                    List<Module> modules = _dbContext.KastraModules
                                                     .Where(m => m.PageId == currentPage.PageId)
                                                     .ToList();
 
                     // Remove 
-                    foreach (KastraModules module in modules)
+                    foreach (Module module in modules)
                     {
                         module.IsDisabled = true;
                     }
@@ -74,7 +76,7 @@ namespace Kastra.Business
             }
             else
             {
-                _dbContext.KastraPages.Add(PageMapper.ToKastraPage(page));
+                _dbContext.KastraPages.Add(page.ToPage());
             }
 
             _dbContext.SaveChanges();
@@ -87,12 +89,13 @@ namespace Kastra.Business
 
         public PageInfo GetPage(int pageID, bool getAll = false)
         {
-            PageInfo pageInfo = null;
-            KastraPages page = null;
+            Page page = null;
             string pageCacheKey = string.Format(PageConfiguration.PageCacheKey, pageID);
 
-            if (_cacheEngine.GetCacheObject<PageInfo>(pageCacheKey, out pageInfo))
+            if (_cacheEngine.GetCacheObject(pageCacheKey, out PageInfo pageInfo))
+            {
                 return pageInfo;
+            }
 
             if (getAll)
             {
@@ -102,7 +105,7 @@ namespace Kastra.Business
                 if (page == null)
                     return null;
 
-                pageInfo = PageMapper.ToPageInfo(page, true);
+                pageInfo = page.ToPageInfo(true, true);
 
                 foreach (var place in pageInfo.PageTemplate.Places)
                 {
@@ -119,10 +122,12 @@ namespace Kastra.Business
             {
                 page = _dbContext.KastraPages.SingleOrDefault(p => p.PageId == pageID);
 
-                if (page == null)
+                if (page is null)
+                {
                     return null;
+                }
 
-                pageInfo = PageMapper.ToPageInfo(page);
+                pageInfo = page.ToPageInfo();
             }
 
             _cacheEngine.SetCacheObject<PageInfo>(pageCacheKey, pageInfo);
@@ -132,22 +137,26 @@ namespace Kastra.Business
 
         public PageInfo GetPageByKey(string keyName, bool getAll = false)
         {
-            KastraPages page = null;
-            PageInfo pageInfo = new PageInfo();
+            Page page = null;
             string pageCacheKey = string.Format(PageConfiguration.PageByKeyCacheKey, keyName);
 
-            if (_cacheEngine.GetCacheObject<PageInfo>(pageCacheKey, out pageInfo))
+            if (_cacheEngine.GetCacheObject(pageCacheKey, out PageInfo pageInfo))
+            {
                 return pageInfo;
+            }
 
             if (getAll)
             {
-                page = _dbContext.KastraPages.Include(p => p.PageTemplate.KastraPlaces)
-                                             .SingleOrDefault(p => p.KeyName == keyName);
+                page = _dbContext.KastraPages
+                    .Include(p => p.PageTemplate.KastraPlaces)
+                    .SingleOrDefault(p => p.KeyName == keyName);
 
-                if (page == null)
+                if (page is null)
+                {
                     return null;
+                }
 
-                pageInfo = PageMapper.ToPageInfo(page, true);
+                pageInfo = page.ToPageInfo(true, true);
 
                 foreach (var place in pageInfo.PageTemplate.Places)
                 {
@@ -164,13 +173,15 @@ namespace Kastra.Business
             {
                 page = _dbContext.KastraPages.SingleOrDefault(p => p.KeyName == keyName);
 
-                if (page == null)
+                if (page is null)
+                {
                     return null;
+                }
 
-                pageInfo = PageMapper.ToPageInfo(page);
+                pageInfo = page.ToPageInfo();
             }
 
-            _cacheEngine.SetCacheObject<PageInfo>(pageCacheKey, pageInfo);
+            _cacheEngine.SetCacheObject(pageCacheKey, pageInfo);
 
             return pageInfo;
         }
@@ -180,7 +191,7 @@ namespace Kastra.Business
             if (pageID < 1)
                 return false;
 
-            KastraPages page = _dbContext.KastraPages.SingleOrDefault(p => p.PageId == pageID);
+            Page page = _dbContext.KastraPages.SingleOrDefault(p => p.PageId == pageID);
 
             if (page == null)
                 return false;
@@ -203,36 +214,36 @@ namespace Kastra.Business
             if (_dbContext == null)
                 return null;
 
-            IList<TemplateInfo> pageTemplatesList = _dbContext.KastraPageTemplates.Select(t => TemplateMapper.ToTemplateInfo(t, false)).ToList();
-
-            return pageTemplatesList;
+            return _dbContext.KastraPageTemplates
+                .Select(t => t.ToTemplateInfo(false, false))
+                .ToList(); ;
         }
 
         public TemplateInfo GetPageTemplate(int pageTemplateID)
         {
-            KastraPageTemplates template = _dbContext.KastraPageTemplates.SingleOrDefault(pt => pt.PageTemplateId == pageTemplateID);
-
-            if (template == null)
-                return null;
-
-            return TemplateMapper.ToTemplateInfo(template);
+            return _dbContext.KastraPageTemplates
+                .SingleOrDefault(pt => pt.PageTemplateId == pageTemplateID)
+                .ToTemplateInfo();
         }
 
         public bool SavePageTemplate(TemplateInfo templateInfo)
         {
-            KastraPageTemplates template = null;
+            PageTemplate template = null;
 
-            if (templateInfo == null)
+            if (templateInfo is null)
+            {
                 return false;
+            }
 
             if (templateInfo.TemplateId > 0)
             {
-                template = _dbContext.KastraPageTemplates.SingleOrDefault(pt => pt.PageTemplateId == templateInfo.TemplateId);
+                template = _dbContext.KastraPageTemplates
+                    .SingleOrDefault(pt => pt.PageTemplateId == templateInfo.TemplateId);
             }
 
-            if (template == null)
+            if (template is null)
             {
-                template = new KastraPageTemplates();
+                template = new PageTemplate();
             }
 
             template.Name = templateInfo.Name;
@@ -241,9 +252,13 @@ namespace Kastra.Business
             template.ViewPath = templateInfo.ViewPath;
 
             if (templateInfo.TemplateId > 0)
+            {
                 _dbContext.KastraPageTemplates.Update(template);
+            }
             else
+            {
                 _dbContext.KastraPageTemplates.Add(template);
+            }
 
             _dbContext.SaveChanges();
 
@@ -258,12 +273,17 @@ namespace Kastra.Business
         public bool DeletePageTemplate(int pageTemplateID)
         {
             if (pageTemplateID < 1)
+            {
                 return false;
+            }
 
-            KastraPageTemplates pageTemplate = _dbContext.KastraPageTemplates.SingleOrDefault(p => p.PageTemplateId == pageTemplateID);
+            PageTemplate pageTemplate = _dbContext.KastraPageTemplates
+                .SingleOrDefault(p => p.PageTemplateId == pageTemplateID);
 
-            if (pageTemplate == null)
+            if (pageTemplate is null)
+            {
                 return false;
+            }
 
             _dbContext.KastraPageTemplates.Remove(pageTemplate);
             _dbContext.SaveChanges();
@@ -280,29 +300,28 @@ namespace Kastra.Business
 
         public IList<PlaceInfo> GetPlacesList(bool includeModules = false)
         {
-            if (includeModules)
-                return _dbContext.KastraPlaces.Include(p => p.KastraModules).Select(p => PlaceMapper.ToPlaceInfo(p, true)).ToList();
-            else
-                return _dbContext.KastraPlaces.Select(p => PlaceMapper.ToPlaceInfo(p, false)).ToList();
-
+            return _dbContext.KastraPlaces
+                //.Include(p => p.KastraModules)
+                .Select(p => p.ToPlaceInfo(includeModules))
+                .ToList();
         }
 
         public PlaceInfo GetPlace(int placeID)
         {
-            KastraPlaces place = _dbContext.KastraPlaces.SingleOrDefault(pt => pt.PlaceId == placeID);
-
-            if (place == null)
-                return null;
-
-            return PlaceMapper.ToPlaceInfo(place);
+            return _dbContext.KastraPlaces
+                .SingleOrDefault(pt => pt.PlaceId == placeID)
+                .ToPlaceInfo();
         }
 
         public bool SavePlace(PlaceInfo place)
         {
-            if (place == null)
+            if (place is null)
+            {
                 return false;
+            }
 
-            KastraPlaces currentPlace = _dbContext.KastraPlaces.SingleOrDefault(p => p.PlaceId == place.PlaceId);
+            Place currentPlace = _dbContext.KastraPlaces
+                .SingleOrDefault(p => p.PlaceId == place.PlaceId);
 
             if (currentPlace != null)
             {
@@ -315,7 +334,7 @@ namespace Kastra.Business
             }
             else
             {
-                _dbContext.KastraPlaces.Add(PlaceMapper.ToKastraPlace(place));
+                _dbContext.KastraPlaces.Add(place.ToPlace());
             }
 
             _dbContext.SaveChanges();
@@ -329,12 +348,17 @@ namespace Kastra.Business
         public bool DeletePlace(int placeID)
         {
             if (placeID < 1)
+            {
                 return false;
+            }
 
-            KastraPlaces place = _dbContext.KastraPlaces.SingleOrDefault(p => p.PlaceId == placeID);
+            Place place = _dbContext.KastraPlaces
+                .SingleOrDefault(p => p.PlaceId == placeID);
 
-            if (place == null)
+            if (place is null)
+            {
                 return false;
+            }
 
             _dbContext.KastraPlaces.Remove(place);
             _dbContext.SaveChanges();
@@ -351,37 +375,46 @@ namespace Kastra.Business
 
         public ModuleDefinitionInfo GetModuleDef(int moduleDefID, bool getModuleControls = false)
         {
-            KastraModuleDefinitions moduleDefinition = null;
+            ModuleDefinition moduleDefinition = null;
 
             if (getModuleControls)
-                moduleDefinition = _dbContext.KastraModuleDefinitions.Include(md => md.KastraModuleControls).SingleOrDefault(pt => pt.ModuleDefId == moduleDefID);
+            {
+                moduleDefinition = _dbContext.KastraModuleDefinitions.Include(md => md.ModuleControls).SingleOrDefault(pt => pt.ModuleDefId == moduleDefID);
+            }
             else
+            {
                 moduleDefinition = _dbContext.KastraModuleDefinitions.SingleOrDefault(pt => pt.ModuleDefId == moduleDefID);
+            }
 
-            if (moduleDefinition == null)
-                return null;
-
-            return ModuleDefinitionMapper.ToModuleDefinitionInfo(moduleDefinition, true, true);
+            return moduleDefinition.ToModuleDefinitionInfo(true, true);
         }
 
         public IList<ModuleDefinitionInfo> GetModuleDefsList()
         {
-            return _dbContext.KastraModuleDefinitions.Select(md => ModuleDefinitionMapper.ToModuleDefinitionInfo(md, false, false)).ToList();
+            return _dbContext.KastraModuleDefinitions
+                .Select(md => md.ToModuleDefinitionInfo(false, false))
+                .ToList();
         }
 
         public bool SaveModuleDef(ModuleDefinitionInfo moduleDefinition)
         {
-            KastraModuleDefinitions newModuleDefinition = null;
+            ModuleDefinition newModuleDefinition = null;
 
-            if (moduleDefinition == null)
+            if (moduleDefinition is null)
+            {
                 return false;
+            }
 
-            newModuleDefinition = ModuleDefinitionMapper.ToKastraModuleDefinition(moduleDefinition);
+            newModuleDefinition = moduleDefinition.ToModuleDefinition();
 
             if (newModuleDefinition.ModuleDefId > 0)
+            {
                 _dbContext.KastraModuleDefinitions.Update(newModuleDefinition);
+            }
             else
+            {
                 _dbContext.KastraModuleDefinitions.Add(newModuleDefinition);
+            }
 
             _dbContext.SaveChanges();
 
@@ -394,12 +427,17 @@ namespace Kastra.Business
         public bool DeleteModuleDef(int moduleDefinitionId)
         {
             if (moduleDefinitionId < 1)
+            {
                 return false;
+            }
 
-            KastraModuleDefinitions moduleDef = _dbContext.KastraModuleDefinitions.SingleOrDefault(p => p.ModuleDefId == moduleDefinitionId);
+            ModuleDefinition moduleDef = _dbContext.KastraModuleDefinitions
+                .SingleOrDefault(p => p.ModuleDefId == moduleDefinitionId);
 
-            if (moduleDef == null)
+            if (moduleDef is null)
+            {
                 return false;
+            }
 
             _dbContext.KastraModuleDefinitions.Remove(moduleDef);
             _dbContext.SaveChanges();
@@ -414,81 +452,109 @@ namespace Kastra.Business
 
         #region Module
 
-        public ModuleInfo GetModule(int moduleID, bool getModuleDef = false, bool getPlace = false)
+        public ModuleInfo GetModule(int moduleID, bool includeModuleDef = false, bool includePlace = false)
         {
-            KastraModules module = null;
-            IQueryable<KastraModules> query = _dbContext.KastraModules.Include(m => m.KastraModulePermissions)
-                                                                        .ThenInclude(m => m.Permission);
+            IQueryable<Module> query = _dbContext.KastraModules
+                .Include(m => m.ModulePermissions)
+                .ThenInclude(m => m.Permission);
 
-            if (getModuleDef)
-                query = query.Include(m => m.ModuleDef.KastraModuleControls);
+            if (includeModuleDef)
+            {
+                query = query.Include(m => m.ModuleDefinition.ModuleControls);
+            }
 
-            if (getPlace)
+            if (includePlace)
+            {
                 query = query.Include(m => m.Place);
+            }
 
-            module = query.SingleOrDefault(pt => pt.ModuleId == moduleID);
-
-            if (module == null)
-                return null;
-
-            return ModuleMapper.ToModuleInfo(module, true);
+            return query
+                .SingleOrDefault(pt => pt.ModuleId == moduleID)
+                .ToModuleInfo(true);
         }
 
-        public IList<ModuleInfo> GetModulesList(bool getModuleDefs = false)
+        public IList<ModuleInfo> GetModulesList(bool includeModuleDefs = false)
         {
-            IList<KastraModules> modulesList = null;
+            IList<Module> modulesList = null;
 
-            if (getModuleDefs)
-                modulesList = _dbContext.KastraModules.Include(m => m.ModuleDef.KastraModuleControls).ToList();
+            if (includeModuleDefs)
+            {
+                modulesList = _dbContext.KastraModules
+                    .Include(m => m.ModuleDefinition.ModuleControls)
+                    .ToList();
+            }
             else
+            {
                 modulesList = _dbContext.KastraModules.ToList();
+            }
 
-            return modulesList.Select(m => ModuleMapper.ToModuleInfo(m, false)).ToList();
+            return modulesList
+                .Select(m => m.ToModuleInfo(false))
+                .ToList();
         }
 
-        public IList<ModuleInfo> GetModulesListByPlaceId(int placeId, bool getModuleDefs = false)
+        public IList<ModuleInfo> GetModulesListByPlaceId(int placeId, bool includeModuleDefs = false)
         {
-            IList<KastraModules> modulesList = null;
+            return _dbContext.KastraModules
+                .Where(m => m.PlaceId == placeId)
+                .Select(m => m.ToModuleInfo(includeModuleDefs))
+                .ToList();
 
-            if (getModuleDefs)
-                modulesList = _dbContext.KastraModules.Include(m => m.ModuleDef.KastraModuleControls)
-                                        .Include(m => m.KastraModulePermissions)
-                                        .ThenInclude(m => m.Permission)
-                                        .Where(m => m.PlaceId == placeId).ToList();
-            else
-                modulesList = _dbContext.KastraModules.Where(m => m.PlaceId == placeId).ToList();
 
-            return modulesList.Select(m => ModuleMapper.ToModuleInfo(m, true)).ToList();
+            //if (includeModuleDefs)
+            //{
+            //    modulesList = 
+            //        .Include(m => m.ModuleDefinition.ModuleControls)
+            //        .Include(m => m.ModulePermissions)
+            //        .ThenInclude(m => m.Permission)
+            //        .Where(m => m.PlaceId == placeId)
+            //        .ToList();
+            //}
+            //else
+            //{
+            //    modulesList = _dbContext.KastraModules
+            //        .Where(m => m.PlaceId == placeId)
+            //        .ToList();
+            //} 
         }
 
-        public IList<ModuleInfo> GetModulesListByPageId(int pageId, bool getModuleDefs = false)
+        public IList<ModuleInfo> GetModulesListByPageId(int pageId, bool includeModulePermissions = false)
         {
-            IList<KastraModules> modulesList = null;
+            //IList<Module> modulesList = null;
 
-            if (getModuleDefs)
-                modulesList = _dbContext.KastraModules.Include(m => m.ModuleDef.KastraModuleControls)
-                                        .Include(m => m.KastraModulePermissions)
-                                        .ThenInclude(m => m.Permission)
-                                        .Where(m => m.PageId == pageId).ToList();
-            else
-                modulesList = _dbContext.KastraModules.Where(m => m.PageId == pageId).ToList();
+            //if (includeModuleDefs)
+            //    modulesList = _dbContext.KastraModules.Include(m => m.ModuleDefinition.ModuleControls)
+            //                            .Include(m => m.ModulePermissions)
+            //                            .ThenInclude(m => m.Permission)
+            //                            .Where(m => m.PageId == pageId).ToList();
+            //else
+            //    modulesList = .ToList();
 
-            return modulesList.Select(m => ModuleMapper.ToModuleInfo(m, false)).ToList();
+            return _dbContext.KastraModules
+                .Where(m => m.PageId == pageId)
+                .Select(m => m.ToModuleInfo(includeModulePermissions))
+                .ToList();
         }
 
         public bool SaveModule(ModuleInfo module)
         {
-            KastraModules newModule = null;
+            Module newModule = null;
 
-            if (module == null)
+            if (module is null)
+            {
                 return false;
+            }
 
-            newModule = ModuleMapper.ToKastraModule(module);
+            newModule = module.ToModule();
 
             if (module.ModuleId > 0)
+            {
                 _dbContext.KastraModules.Update(newModule);
+            }
             else
+            {
                 _dbContext.KastraModules.Add(newModule);
+            }
 
             _dbContext.SaveChanges();
 
@@ -502,21 +568,25 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeleteModule(int moduleID)
+        public bool DeleteModule(int moduleId)
         {
-            if (moduleID < 1)
+            if (moduleId < 1)
+            {
                 return false;
+            }
 
-            KastraModules module = _dbContext.KastraModules
-                                    .Include(m => m.KastraModulePermissions)
-                                    .Include(m => m.Place)
-                                    .SingleOrDefault(p => p.ModuleId == moduleID);
+            Module module = _dbContext.KastraModules
+                .Include(m => m.ModulePermissions)
+                .Include(m => m.Place)
+                .SingleOrDefault(p => p.ModuleId == moduleId);
 
-            if (module == null)
+            if (module is null)
+            {
                 return false;
+            }
 
             // Delete all permissions
-            foreach(KastraModulePermissions permission in module.KastraModulePermissions)
+            foreach(ModulePermission permission in module.ModulePermissions)
             {
                 _dbContext.KastraModulePermissions.Remove(permission);
             }
@@ -537,36 +607,46 @@ namespace Kastra.Business
 
         public ModuleControlInfo GetModuleControl(int moduleControlId)
         {
-            KastraModuleControls moduleControl = _dbContext.KastraModuleControls.SingleOrDefault(mc => mc.ModuleControlId == moduleControlId);
-
-            if (moduleControl == null)
-                return null;
-
-            return ModuleControlMapper.ToModuleControlInfo(moduleControl);
+            return _dbContext.KastraModuleControls
+                .SingleOrDefault(mc => mc.ModuleControlId == moduleControlId)
+                .ToModuleControlInfo();
         }
 
-        public IList<ModuleControlInfo> GetModuleControlsList(int moduleDefId)
+        public IList<ModuleControlInfo> GetModuleControlsList(int moduleDefinitionId)
         {
-            return _dbContext.KastraModuleControls.Where(mc => mc.ModuleDefId == moduleDefId).Select(mc => ModuleControlMapper.ToModuleControlInfo(mc)).ToList();
+            return _dbContext.KastraModuleControls
+                .Where(mc => mc.ModuleDefinitionId == moduleDefinitionId)
+                .Select(mc => mc.ToModuleControlInfo())
+                .ToList();
         }
 
         public bool SaveModuleControl(ModuleControlInfo moduleControlInfo)
         {
-            KastraModuleControls moduleControl = _dbContext.KastraModuleControls
-                                                           .SingleOrDefault(mc => mc.ModuleControlId == moduleControlInfo.ModuleControlId);
-            ModuleDefinitionInfo moduleDef = null;
-
-            moduleDef = GetModuleDef(moduleControlInfo.ModuleDefId);
-
-            if (moduleDef == null)
+            if (moduleControlInfo is null)
+            {
                 return false;
+            }
 
-            moduleControl = ModuleControlMapper.ToKastraModuleControl(moduleControlInfo);
+            ModuleControl moduleControl = _dbContext.KastraModuleControls
+                .SingleOrDefault(mc => mc.ModuleControlId == moduleControlInfo.ModuleControlId);
+
+            ModuleDefinitionInfo moduleDef = GetModuleDef(moduleControlInfo.ModuleDefId);
+
+            if (moduleDef is null)
+            {
+                return false;
+            }
+
+            moduleControl = moduleControlInfo.ToModuleControl();
 
             if (moduleControl.ModuleControlId > 0)
+            {
                 _dbContext.KastraModuleControls.Update(moduleControl);
+            }
             else
+            {
                 _dbContext.KastraModuleControls.Add(moduleControl);
+            }
 
             _dbContext.SaveChanges();
 
@@ -579,12 +659,17 @@ namespace Kastra.Business
         public bool DeleteModuleControl(int moduleControlId)
         {
             if (moduleControlId < 1)
+            {
                 return false;
+            }
 
-            KastraModuleControls moduleControl = _dbContext.KastraModuleControls.SingleOrDefault(p => p.ModuleControlId == moduleControlId);
+            ModuleControl moduleControl = _dbContext.KastraModuleControls
+                .SingleOrDefault(p => p.ModuleControlId == moduleControlId);
 
-            if (moduleControl == null)
+            if (moduleControl is null)
+            {
                 return false;
+            }
 
             _dbContext.KastraModuleControls.Remove(moduleControl);
             _dbContext.SaveChanges();

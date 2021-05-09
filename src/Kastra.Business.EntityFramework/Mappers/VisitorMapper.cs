@@ -5,28 +5,48 @@ namespace Kastra.Business.Mappers
 {
     public static class VisitorMapper
     {
-        public static VisitorInfo ToVisitorInfo(this KastraVisitors visitor)
+        /// <summary>
+        /// Convert Visitor to VisitorInfo.
+        /// </summary>
+        /// <param name="visitor">Visitor</param>
+        /// <returns>Visitor info</returns>
+        public static VisitorInfo ToVisitorInfo(this Visitor visitor)
         {
-            VisitorInfo visitorInfo = new VisitorInfo();
-            visitorInfo.Id = visitor.Id;
-            visitorInfo.IpAddress = visitor.IpAddress;
-            visitorInfo.LastVisitAt = visitor.LastVisitAt;
-            visitorInfo.UserAgent = visitor.UserAgent;
-            visitorInfo.UserId = visitor.UserId;
+            if (visitor is null)
+            {
+                return null;
+            }
 
-            return visitorInfo;
+            return new VisitorInfo()
+            { 
+                Id = visitor.Id,
+                IpAddress = visitor.IpAddress,
+                LastVisitAt = visitor.LastVisitAt,
+                UserAgent = visitor.UserAgent,
+                UserId = visitor.UserId
+            };
         }
 
-        public static KastraVisitors ToKastraVisitor(this VisitorInfo visitorInfo)
+        /// <summary>
+        /// Convert VisitorInfo to Visitor.
+        /// </summary>
+        /// <param name="visitorInfo">Visitor info</param>
+        /// <returns>Visitor</returns>
+        public static Visitor ToVisitor(this VisitorInfo visitorInfo)
         {
-            KastraVisitors visitor = new KastraVisitors();
-            visitor.Id = visitorInfo.Id;
-            visitor.IpAddress = visitorInfo.IpAddress;
-            visitor.LastVisitAt = visitorInfo.LastVisitAt;
-            visitor.UserAgent = visitorInfo.UserAgent;
-            visitor.UserId = visitorInfo.UserId;
+            if (visitorInfo is null)
+            {
+                return null;
+            }
 
-            return visitor;
+            return new Visitor()
+            { 
+                Id = visitorInfo.Id,
+                IpAddress = visitorInfo.IpAddress,
+                LastVisitAt = visitorInfo.LastVisitAt,
+                UserAgent = visitorInfo.UserAgent,
+                UserId = visitorInfo.UserId
+            };
         }
     }
 }

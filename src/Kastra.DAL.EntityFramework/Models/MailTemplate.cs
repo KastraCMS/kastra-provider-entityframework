@@ -1,6 +1,6 @@
 namespace Kastra.DAL.EntityFramework.Models
 {
-    public partial class KastraMailTemplate
+    public partial class MailTemplate
     {
         public int MailTemplateId { get; set; }
         public string Keyname { get; set; }

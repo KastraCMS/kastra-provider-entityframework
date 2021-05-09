@@ -5,22 +5,22 @@ using Microsoft.Extensions.Configuration;
 
 namespace Kastra.DAL.EntityFramework
 {
-    public class KastraDbContextFactory : IDesignTimeDbContextFactory<KastraContext>
+    public class KastraDbContextFactory : IDesignTimeDbContextFactory<KastraDbContext>
     {
-        public KastraContext CreateDbContext(string[] args)
+        public KastraDbContext CreateDbContext(string[] args)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath($"{Directory.GetCurrentDirectory()}")
                 .AddJsonFile("appsettings.json")
                 .Build();
     
-            var builder = new DbContextOptionsBuilder<KastraContext>();
+            var builder = new DbContextOptionsBuilder<KastraDbContext>();
     
             var connectionString = configuration.GetConnectionString("DefaultConnection");
     
             builder.UseSqlServer(connectionString);
     
-            return new KastraContext(builder.Options);
+            return new KastraDbContext(builder.Options);
         }
     }
 }

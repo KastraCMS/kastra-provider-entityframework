@@ -1,41 +1,74 @@
-﻿using System;
-using System.Linq;
-using Kastra.Core;
-using Kastra.Core.Dto;
+﻿using System.Linq;
+using Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework.Models;
 
 namespace Kastra.Business.Mappers
 {
-	public static class TemplateMapper
+    public static class TemplateMapper
 	{
-		public static TemplateInfo ToTemplateInfo(this KastraPageTemplates template, Boolean includeChildren = false)
+		/// <summary>
+		/// Convert Template to TemplateInfo.
+		/// </summary>
+		/// <param name="template">Template</param>
+		/// <param name="includePages">Convert the page list</param>
+		/// <param name="includePlaces">Convert the place list</param>
+		/// <returns>Template info</returns>
+		public static TemplateInfo ToTemplateInfo(
+			this PageTemplate template, 
+			bool includePages = false, 
+			bool includePlaces = false)
 		{
-			TemplateInfo templateInfo = new TemplateInfo();
-			templateInfo.TemplateId = template.PageTemplateId;
-			templateInfo.KeyName = template.KeyName;
-			templateInfo.Name = template.Name;
-			templateInfo.ModelClass = template.ModelClass;
-			templateInfo.ViewPath = template.ViewPath;
-
-            if(includeChildren)
+			if (template is null)
             {
-				templateInfo.Pages = template.KastraPages.Select(p => PageMapper.ToPageInfo(p, false)).ToList();
-				templateInfo.Places = template.KastraPlaces.Select(p => PlaceMapper.ToPlaceInfo(p, false)).ToList();   
+				return null;
+            }
+
+			var templateInfo = new TemplateInfo()
+			{
+				TemplateId = template.PageTemplateId,
+				KeyName = template.KeyName,
+				Name = template.Name,
+				ModelClass = template.ModelClass,
+				ViewPath = template.ViewPath
+			};
+
+            if(includePages)
+            {
+				templateInfo.Pages = template.KastraPages
+					.Select(p => p.ToPageInfo())
+					.ToList();
+            }
+
+			if (includePlaces)
+            {
+				templateInfo.Places = template.KastraPlaces
+					.Select(p => p.ToPlaceInfo(false))
+					.ToList();
             }
 
 			return templateInfo;
 		}
 
-		public static KastraPageTemplates ToKastraPageTemplate(this TemplateInfo templateInfo)
+		/// <summary>
+		/// Convert TemplateInfo to Template.
+		/// </summary>
+		/// <param name="templateInfo">Template info</param>
+		/// <returns>Template</returns>
+		public static PageTemplate ToPageTemplate(this TemplateInfo templateInfo)
 		{
-			KastraPageTemplates template = new KastraPageTemplates();
-			template.PageTemplateId = templateInfo.TemplateId;
-			template.KeyName = templateInfo.KeyName;
-			template.Name = templateInfo.Name;
-			template.ModelClass = templateInfo.ModelClass;
-			template.ViewPath = templateInfo.ViewPath;
+			if (templateInfo is null)
+            {
+				return null;
+            }
 
-			return template;
+			return new PageTemplate() 
+			{
+				PageTemplateId = templateInfo.TemplateId,
+				KeyName = templateInfo.KeyName,
+				Name = templateInfo.Name,
+				ModelClass = templateInfo.ModelClass,
+				ViewPath = templateInfo.ViewPath
+			};
 		}
 	}
 }
