@@ -68,7 +68,7 @@ namespace Kastra.Business
             Type serviceType = typeof(IModuleRegister);
 
             IEnumerable<Type> modulesToRegister = assembly.GetTypes()
-                                                    .Where(type => serviceType.IsAssignableFrom(type) && !type.GetTypeInfo().IsAbstract);
+                .Where(type => serviceType.IsAssignableFrom(type) && !type.GetTypeInfo().IsAbstract);
 
             foreach (Type implementationType in modulesToRegister)
             {
@@ -87,7 +87,7 @@ namespace Kastra.Business
             Type serviceType = typeof(IModuleRegister);
 
             IEnumerable<Type> modulesToRegister = assembly.GetTypes()
-                                                    .Where(type => serviceType.IsAssignableFrom(type) && !type.GetTypeInfo().IsAbstract);
+                .Where(type => serviceType.IsAssignableFrom(type) && !type.GetTypeInfo().IsAbstract);
 
             foreach (Type implementationType in modulesToRegister)
             {

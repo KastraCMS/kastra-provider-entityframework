@@ -301,7 +301,7 @@ namespace Kastra.Business
         public IList<PlaceInfo> GetPlacesList(bool includeModules = false)
         {
             return _dbContext.KastraPlaces
-                //.Include(p => p.KastraModules)
+                .Include(p => p.KastraModules)
                 .Select(p => p.ToPlaceInfo(includeModules))
                 .ToList();
         }
@@ -473,11 +473,11 @@ namespace Kastra.Business
                 .ToModuleInfo(true);
         }
 
-        public IList<ModuleInfo> GetModulesList(bool includeModuleDefs = false)
+        public IList<ModuleInfo> GetModulesList(bool includeModuleControls = false)
         {
             IList<Module> modulesList = null;
 
-            if (includeModuleDefs)
+            if (includeModuleControls)
             {
                 modulesList = _dbContext.KastraModules
                     .Include(m => m.ModuleDefinition.ModuleControls)
@@ -493,44 +493,37 @@ namespace Kastra.Business
                 .ToList();
         }
 
-        public IList<ModuleInfo> GetModulesListByPlaceId(int placeId, bool includeModuleDefs = false)
+        public IList<ModuleInfo> GetModulesListByPlaceId(int placeId, bool includeModulePermissions = false)
         {
-            return _dbContext.KastraModules
+            IQueryable<Module> query = _dbContext.KastraModules;
+
+            if (includeModulePermissions)
+            {
+                query = query
+                    .Include(m => m.ModuleDefinition.ModuleControls)
+                    .Include(m => m.ModulePermissions)
+                    .ThenInclude(m => m.Permission);
+            }
+
+            return query
                 .Where(m => m.PlaceId == placeId)
-                .Select(m => m.ToModuleInfo(includeModuleDefs))
+                .Select(m => m.ToModuleInfo(includeModulePermissions))
                 .ToList();
-
-
-            //if (includeModuleDefs)
-            //{
-            //    modulesList = 
-            //        .Include(m => m.ModuleDefinition.ModuleControls)
-            //        .Include(m => m.ModulePermissions)
-            //        .ThenInclude(m => m.Permission)
-            //        .Where(m => m.PlaceId == placeId)
-            //        .ToList();
-            //}
-            //else
-            //{
-            //    modulesList = _dbContext.KastraModules
-            //        .Where(m => m.PlaceId == placeId)
-            //        .ToList();
-            //} 
         }
 
         public IList<ModuleInfo> GetModulesListByPageId(int pageId, bool includeModulePermissions = false)
         {
-            //IList<Module> modulesList = null;
+            IQueryable<Module> query = _dbContext.KastraModules;
 
-            //if (includeModuleDefs)
-            //    modulesList = _dbContext.KastraModules.Include(m => m.ModuleDefinition.ModuleControls)
-            //                            .Include(m => m.ModulePermissions)
-            //                            .ThenInclude(m => m.Permission)
-            //                            .Where(m => m.PageId == pageId).ToList();
-            //else
-            //    modulesList = .ToList();
+            if (includeModulePermissions)
+            {
+                query = query
+                    .Include(m => m.ModuleDefinition.ModuleControls)
+                    .Include(m => m.ModulePermissions)
+                    .ThenInclude(m => m.Permission);
+            }
 
-            return _dbContext.KastraModules
+            return query
                 .Where(m => m.PageId == pageId)
                 .Select(m => m.ToModuleInfo(includeModulePermissions))
                 .ToList();
@@ -680,6 +673,85 @@ namespace Kastra.Business
             return true;
         }
 
+        #endregion
+
+        #region Module Navigation
+
+        public IList<ModuleNavigationInfo> GetModuleNavigationList(int moduleDefinitionId)
+        {
+            return _dbContext.KastraModuleNavigations
+                .Where(mc => mc.ModuleDefinitionId == moduleDefinitionId)
+                .Select(mc => mc.ToModuleNavigationInfo())
+                .ToList();
+        }
+
+        public IList<ModuleNavigationInfo> GetModuleNavigationListByType(string type)
+        {
+            return _dbContext.KastraModuleNavigations
+                .Where(mc => mc.Type == type)
+                .Select(mc => mc.ToModuleNavigationInfo())
+                .ToList();
+        }
+
+        public bool SaveModuleNavigation(ModuleNavigationInfo moduleNavigation)
+        {
+            if (moduleNavigation is null)
+            {
+                return false;
+            }
+
+            ModuleDefinitionInfo moduleDef = GetModuleDef(moduleNavigation.ModuleDefinitionId);
+
+            if (moduleDef is null)
+            {
+                return false;
+            }
+
+            ModuleNavigation navigation = moduleNavigation.Id > 0 ? 
+                _dbContext.KastraModuleNavigations.SingleOrDefault(mn => mn.Id == moduleNavigation.Id) : null;
+
+            navigation = moduleNavigation.ToModuleNavigation();
+
+            if (navigation.Id > 0)
+            {
+                _dbContext.KastraModuleNavigations.Update(navigation);
+            }
+            else
+            {
+                _dbContext.KastraModuleNavigations.Add(navigation);
+            }
+
+            _dbContext.SaveChanges();
+
+            // Clear cache
+            _cacheEngine.ClearCacheContains("Module");
+
+            return true;
+        }
+
+        public bool DeleteModuleNavigation(int moduleNavigationId)
+        {
+            if (moduleNavigationId < 1)
+            {
+                return false;
+            }
+
+            ModuleNavigation moduleNavigation = _dbContext.KastraModuleNavigations
+                .SingleOrDefault(p => p.Id == moduleNavigationId);
+
+            if (moduleNavigation is null)
+            {
+                return false;
+            }
+
+            _dbContext.KastraModuleNavigations.Remove(moduleNavigation);
+            _dbContext.SaveChanges();
+
+            // Clear cache
+            _cacheEngine.ClearCacheContains("Module");
+
+            return true;
+        }
 
         #endregion
     }

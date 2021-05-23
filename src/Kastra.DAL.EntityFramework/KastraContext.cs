@@ -135,7 +135,11 @@ namespace Kastra.DAL.EntityFramework
 
                 entity.Property(e => e.ModuleDefinitionId).HasColumnName("ModuleDefinitionID");
 
-                entity.Property(e => e.Name);
+                entity.Property(e => e.Name)
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Icon)
+                    .HasMaxLength(250);
 
                 entity.Property(e => e.Url)
                     .IsRequired()
