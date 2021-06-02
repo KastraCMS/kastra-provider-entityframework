@@ -27,7 +27,18 @@ namespace Kastra.Business
 			SiteConfigurationInfo siteConfig = null;
 
 			if (!_cacheEngine.GetCacheObject(SiteConfiguration.SiteConfigCacheKey, out siteConfig))
+            {
 				siteConfig = _cacheEngine.SetCacheObject(SiteConfiguration.SiteConfigCacheKey, LoadSiteConfiguration());
+
+				if (siteConfig is not null && siteConfig.CacheActivated)
+                {
+					_cacheEngine.EnableCache();
+                }
+				else
+                {
+					_cacheEngine.DisableCache();
+                }
+            }
 
 			return siteConfig;
 		}
