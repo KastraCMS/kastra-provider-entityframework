@@ -4,8 +4,6 @@ using System.Net.Mail;
 using System.Threading.Tasks;
 using Kastra.Core.Services.Contracts;
 using Kastra.Core.DTO;
-using Kastra.Core.Services;
-using Microsoft.Extensions.Logging;
 
 namespace Kastra.Business
 {
@@ -14,10 +12,10 @@ namespace Kastra.Business
         private readonly SmtpClient _smtpClient;
         private readonly SiteConfigurationInfo _siteConfiguration;
 
-        public EmailSender(IParameterManager parameterManager, ILogger<EmailSender> logger)
+        public EmailSender(IParameterManager parameterManager)
         {
             // Get site configuration
-            _siteConfiguration = parameterManager.GetSiteConfiguration();
+            _siteConfiguration = parameterManager.GetSiteConfigurationAsync().Result;
 
             // Set smtp client
             _smtpClient = new SmtpClient
@@ -42,14 +40,14 @@ namespace Kastra.Business
         /// <param name="message">Message.</param>
         public void SendEmail(string email, string subject, string message)
         {
-            using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
+            using MailMessage mailMessage = new(_siteConfiguration.EmailSender, email)
             {
-                mailMessage.Subject = subject;
-                mailMessage.Body = message;
-                mailMessage.IsBodyHtml = true;
-                
-                _smtpClient.Send(mailMessage);
-            }
+                Subject = subject,
+                Body = message,
+                IsBodyHtml = true
+            };
+
+            _smtpClient.Send(mailMessage);
         }
 
         /// <summary>
@@ -61,14 +59,14 @@ namespace Kastra.Business
         /// <param name="message">Message.</param>
         public async Task SendEmailAsync(string email, string subject, string message)
         {
-            using (MailMessage mailMessage = new MailMessage(_siteConfiguration.EmailSender, email))
+            using MailMessage mailMessage = new (_siteConfiguration.EmailSender, email)
             {
-                mailMessage.Subject = subject;
-                mailMessage.Body = message;
-                mailMessage.IsBodyHtml = true;
+                Subject = subject,
+                Body = message,
+                IsBodyHtml = true
+            };
 
-                await _smtpClient.SendMailAsync(mailMessage);
-            }
+            await _smtpClient.SendMailAsync(mailMessage);
         }
     }
 }

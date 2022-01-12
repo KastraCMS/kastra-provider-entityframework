@@ -10,12 +10,14 @@ using Dto = Kastra.Core.DTO;
 using Kastra.DAL.EntityFramework;
 using Models = Kastra.DAL.EntityFramework.Models;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kastra.Business
 {
     public class FileManager : IFileManager
     {
-        private KastraDbContext _dbContext;
+        private readonly KastraDbContext _dbContext;
         private readonly AppSettings _appSettings;
 
         public FileManager(KastraDbContext dbContext, IConfiguration configuration)
@@ -24,7 +26,8 @@ namespace Kastra.Business
             _dbContext = dbContext;
         }
 
-        public void AddFile(Dto.FileInfo file, Stream stream)
+        /// <inheritdoc cref="IFileManager.AddFileAsync(Dto.FileInfo, Stream)"/>
+        public async Task AddFileAsync(Dto.FileInfo file, Stream stream)
         {
             if (stream is null)
             {
@@ -36,7 +39,8 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(file));
             }
 
-            if (file.FileId != Guid.Empty && _dbContext.KastraFiles.Any(f => f.FileId == file.FileId))
+            if (file.FileId != Guid.Empty 
+                && (await _dbContext.KastraFiles.AnyAsync(f => f.FileId == file.FileId)))
             {
                 throw new ArgumentException($"{nameof(file.FileId)} already exists");
             }
@@ -62,7 +66,8 @@ namespace Kastra.Business
 
                 // Save file in database
                 _dbContext.KastraFiles.Add(file.ToFile());
-                _dbContext.SaveChanges();
+
+                await _dbContext.SaveChangesAsync();
             }
             catch (Exception)
             {
@@ -72,7 +77,8 @@ namespace Kastra.Business
             }
         }
 
-        public void DeleteFile(Guid fileId)
+        /// <inheritdoc cref="IFileManager.DeleteFileAsync(Guid)" />
+        public async Task DeleteFileAsync(Guid fileId)
         {
             Models.File file = _dbContext.KastraFiles.SingleOrDefault(f => f.FileId == fileId);
 
@@ -87,13 +93,15 @@ namespace Kastra.Business
             System.IO.File.Delete(filePath);
 
             _dbContext.KastraFiles.Remove(file);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
         }
 
-        public byte[] DownloadFileByGuid(Guid fileId)
+        /// <inheritdoc cref="IFileManager.DownloadFileByGuidAsync(Guid)" />
+        public async Task<byte[]> DownloadFileByGuidAsync(Guid fileId)
         {
-            Dto.FileInfo file = _dbContext.KastraFiles
-                .SingleOrDefault(f => f.FileId == fileId)
+            Dto.FileInfo file = (await _dbContext.KastraFiles
+                .SingleOrDefaultAsync(f => f.FileId == fileId))
                 .ToFileInfo();
 
             if (file is null)
@@ -104,14 +112,16 @@ namespace Kastra.Business
             return File.ReadAllBytes(GetFilePath(file));
         }
 
-        public Dto.FileInfo GetFile(Guid fileId)
+        /// <inheritdoc cref="IFileManager.GetFileAsync(Guid)" />
+        public async Task<Dto.FileInfo> GetFileAsync(Guid fileId)
         {
-            return _dbContext.KastraFiles
-                .SingleOrDefault(f => f.FileId == fileId)
+            return (await _dbContext.KastraFiles
+                .SingleOrDefaultAsync(f => f.FileId == fileId))
                 .ToFileInfo();
         }
 
-        public IList<Core.DTO.FileInfo> GetFilesByPath(string path)
+        /// <inheritdoc cref="IFileManager.GetFilesByPathAsync(string)" />
+        public async Task<IList<Dto.FileInfo>> GetFilesByPathAsync(string path)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -119,9 +129,9 @@ namespace Kastra.Business
             }
 
             IList<Dto.FileInfo> filesInfo = null;
-            List<Models.File> files = _dbContext.KastraFiles
+            List<Models.File> files = await _dbContext.KastraFiles
                 .Where(f => f.Path == path)
-                .ToList();
+                .ToListAsync();
             
             if (files is null)
             {
@@ -147,7 +157,7 @@ namespace Kastra.Business
         /// <returns></returns>
         protected string GetFilePath(Dto.FileInfo file)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new ();
             sb.Append(_appSettings.Configuration.FileDirectoryPath.TrimEnd(Path.DirectorySeparatorChar));
             sb.Append(Path.DirectorySeparatorChar);
             sb.Append(file.Path.Replace("..", string.Empty));

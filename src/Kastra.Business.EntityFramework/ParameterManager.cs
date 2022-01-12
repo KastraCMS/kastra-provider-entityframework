@@ -8,6 +8,8 @@ using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kastra.Business
 {
@@ -22,38 +24,73 @@ namespace Kastra.Business
 			_dbContext = dbContext;
 		}
 
-		public SiteConfigurationInfo GetSiteConfiguration()
+		/// <inheritdoc cref="IParameterManager.GetSiteConfigurationAsync"/>
+		public async Task<SiteConfigurationInfo> GetSiteConfigurationAsync()
 		{
-			SiteConfigurationInfo siteConfig = null;
-
-			if (!_cacheEngine.GetCacheObject(SiteConfiguration.SiteConfigCacheKey, out siteConfig))
+            if (!_cacheEngine.GetCacheObject(SiteConfiguration.SiteConfigCacheKey, out SiteConfigurationInfo siteConfig))
             {
-				siteConfig = _cacheEngine.SetCacheObject(SiteConfiguration.SiteConfigCacheKey, LoadSiteConfiguration());
+                siteConfig = _cacheEngine.SetCacheObject(SiteConfiguration.SiteConfigCacheKey, await LoadSiteConfigurationAsync());
 
-				if (siteConfig is not null && siteConfig.CacheActivated)
+                if (siteConfig is not null && siteConfig.CacheActivated)
                 {
-					_cacheEngine.EnableCache();
+                    _cacheEngine.EnableCache();
                 }
-				else
+                else
                 {
-					_cacheEngine.DisableCache();
+                    _cacheEngine.DisableCache();
                 }
             }
 
-			return siteConfig;
+            return siteConfig;
 		}
 
-		private SiteConfigurationInfo LoadSiteConfiguration()
+		/// <inheritdoc cref="IParameterManager.SaveSiteConfigurationAsync(SiteConfigurationInfo)" />
+		public async Task SaveSiteConfigurationAsync(SiteConfigurationInfo siteConfiguration)
+		{
+			Parameter parameter = null;
+			List<Parameter> parameters = await _dbContext.KastraParameters.ToListAsync();
+
+			foreach (PropertyInfo property in typeof(SiteConfigurationInfo).GetProperties())
+			{
+				if (parameters is not null)
+				{
+					parameter = parameters.SingleOrDefault(p => p.Key == property.Name);
+				}
+				
+				if (parameters is null || parameter is null)
+				{
+					parameter = new ()
+                    {
+						Key = property.Name,
+						Name = ((property.GetCustomAttributes(typeof(DisplayNameAttribute), true).SingleOrDefault()) as DisplayNameAttribute)?.DisplayName
+                    };
+
+					_dbContext.KastraParameters.Add(parameter);
+				}
+
+				parameter.Value = property.GetValue(siteConfiguration)?.ToString();
+			}
+
+			await _dbContext.SaveChangesAsync();
+		}
+
+		/// <summary>
+		/// Load the site configuration.
+		/// </summary>
+		/// <returns>Site configuration</returns>
+		private async Task<SiteConfigurationInfo> LoadSiteConfigurationAsync()
 		{
 			string obj = null;
 			TypeConverter typeConverter = null;
-			SiteConfigurationInfo siteConfiguration = new SiteConfigurationInfo();
+			SiteConfigurationInfo siteConfiguration = new ();
 			IDictionary<string, string> parameters = null;
 
-			if (_dbContext == null)
+			if (_dbContext is null)
+            {
 				return siteConfiguration;
+            }
 
-			parameters = _dbContext.KastraParameters.ToDictionary(p => p.Key, p => p.Value);
+			parameters = await _dbContext.KastraParameters.ToDictionaryAsync(p => p.Key, p => p.Value);
 
 			foreach (PropertyInfo property in typeof(SiteConfigurationInfo).GetProperties())
 			{
@@ -67,7 +104,7 @@ namespace Kastra.Business
                         Value = property.GetValue(siteConfiguration)?.ToString() 
                     });
 
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
 
                     continue;
                 }
@@ -76,8 +113,10 @@ namespace Kastra.Business
 
                 typeConverter = TypeDescriptor.GetConverter(property.PropertyType);
 
-				if (typeConverter == null)
+				if (typeConverter is null)
+                {
 					continue;
+                }
 
 				property.SetValue(siteConfiguration, typeConverter.ConvertFromString(obj), (object[])null);
 			}
@@ -89,31 +128,5 @@ namespace Kastra.Business
 			return siteConfiguration;
 		}
 
-		public void SaveSiteConfiguration(SiteConfigurationInfo siteConfiguration)
-		{
-			Parameter parameter = null;
-			List<Parameter> parameters = _dbContext.KastraParameters.ToList();
-
-			foreach (PropertyInfo property in typeof(SiteConfigurationInfo).GetProperties())
-			{
-				if (parameters != null)
-				{
-					parameter = parameters.SingleOrDefault(p => p.Key == property.Name);
-				}
-				
-				if (parameters == null || parameter == null)
-				{
-					parameter = new Parameter();
-					parameter.Key = property.Name;
-					parameter.Name = ((property.GetCustomAttributes(typeof(DisplayNameAttribute), true).SingleOrDefault()) as DisplayNameAttribute)?.DisplayName;
-
-					_dbContext.KastraParameters.Add(parameter);
-				}
-
-				parameter.Value = property.GetValue(siteConfiguration)?.ToString();
-			}
-
-			_dbContext.SaveChanges();
-		}
 	}
 }

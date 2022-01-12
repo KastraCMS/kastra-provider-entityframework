@@ -8,6 +8,7 @@ using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Kastra.Business
 {
@@ -28,33 +29,37 @@ namespace Kastra.Business
 
         #region Pages
 
-        public IList<PageInfo> GetPagesList()
+        /// <inheritdoc cref="IViewManager.GetPagesListAsync" />
+        public async Task<IList<PageInfo>> GetPagesListAsync()
         {
             if (_dbContext is null)
             {
                 return null;
             }
 
-            return _dbContext.KastraPages
+            return await _dbContext.KastraPages
                 .Select(p => p.ToPageInfo(false, false))
-                .ToList(); ;
+                .ToListAsync();
         }
 
-        public bool SavePage(PageInfo page)
+        /// <inheritdoc cref="IViewManager.SavePageAsync(PageInfo)" />
+        public async Task<bool> SavePageAsync(PageInfo page)
         {
-            if (page == null)
+            if (page is null)
+            {
                 return false;
+            }
 
-            Page currentPage =  _dbContext.KastraPages.SingleOrDefault(p => p.PageId == page.PageId);
+            Page currentPage = await _dbContext.KastraPages.SingleOrDefaultAsync(p => p.PageId == page.PageId);
 
-            if(currentPage != null)
+            if(currentPage is not null)
             {
                 if (currentPage.PageTemplateId != page.PageTemplateId)
                 {
                     // Get the modules of the page
-                    List<Module> modules = _dbContext.KastraModules
-                                                    .Where(m => m.PageId == currentPage.PageId)
-                                                    .ToList();
+                    List<Module> modules = await _dbContext.KastraModules
+                                                .Where(m => m.PageId == currentPage.PageId)
+                                                .ToListAsync();
 
                     // Remove 
                     foreach (Module module in modules)
@@ -79,7 +84,7 @@ namespace Kastra.Business
                 _dbContext.KastraPages.Add(page.ToPage());
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Page");
@@ -87,7 +92,8 @@ namespace Kastra.Business
             return true;
         }
 
-        public PageInfo GetPage(int pageID, bool getAll = false)
+        /// <inheritdoc cref="IViewManager.GetPageAsync(int, bool)" />
+        public async Task<PageInfo> GetPageAsync(int pageID, bool getAll = false)
         {
             Page page = null;
             string pageCacheKey = string.Format(PageConfiguration.PageCacheKey, pageID);
@@ -99,57 +105,8 @@ namespace Kastra.Business
 
             if (getAll)
             {
-                page = _dbContext.KastraPages.Include(p => p.PageTemplate.KastraPlaces)
-                              .SingleOrDefault(p => p.PageId == pageID);
-
-                if (page == null)
-                    return null;
-
-                pageInfo = page.ToPageInfo(true, true);
-
-                foreach (var place in pageInfo.PageTemplate.Places)
-                {
-                    if(place.ModuleId.HasValue)
-                    {
-                        place.StaticModule = GetModule(place.ModuleId.Value, true, false);
-                    }
-                    
-                    place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
-                }
-                    
-            }
-            else
-            {
-                page = _dbContext.KastraPages.SingleOrDefault(p => p.PageId == pageID);
-
-                if (page is null)
-                {
-                    return null;
-                }
-
-                pageInfo = page.ToPageInfo();
-            }
-
-            _cacheEngine.SetCacheObject<PageInfo>(pageCacheKey, pageInfo);
-
-            return pageInfo;
-        }
-
-        public PageInfo GetPageByKey(string keyName, bool getAll = false)
-        {
-            Page page = null;
-            string pageCacheKey = string.Format(PageConfiguration.PageByKeyCacheKey, keyName);
-
-            if (_cacheEngine.GetCacheObject(pageCacheKey, out PageInfo pageInfo))
-            {
-                return pageInfo;
-            }
-
-            if (getAll)
-            {
-                page = _dbContext.KastraPages
-                    .Include(p => p.PageTemplate.KastraPlaces)
-                    .SingleOrDefault(p => p.KeyName == keyName);
+                page = await _dbContext.KastraPages.Include(p => p.PageTemplate.KastraPlaces)
+                              .SingleOrDefaultAsync(p => p.PageId == pageID);
 
                 if (page is null)
                 {
@@ -162,16 +119,15 @@ namespace Kastra.Business
                 {
                     if(place.ModuleId.HasValue)
                     {
-                        place.StaticModule = GetModule(place.ModuleId.Value, true, false);
+                        place.StaticModule = await GetModuleAsync(place.ModuleId.Value, true, false);
                     }
-
-                    place.Modules = GetModulesListByPlaceId(place.PlaceId, true);
-                }
                     
+                    place.Modules = await GetModulesListByPlaceIdAsync(place.PlaceId, true);
+                }
             }
             else
             {
-                page = _dbContext.KastraPages.SingleOrDefault(p => p.KeyName == keyName);
+                page = await _dbContext.KastraPages.SingleOrDefaultAsync(p => p.PageId == pageID);
 
                 if (page is null)
                 {
@@ -186,18 +142,76 @@ namespace Kastra.Business
             return pageInfo;
         }
 
-        public bool DeletePage(int pageID)
+        /// <inheritdoc cref="IViewManager.GetPageByKeyAsync(string, bool)" />
+        public async Task<PageInfo> GetPageByKeyAsync(string keyName, bool getAll = false)
+        {
+            Page page = null;
+            string pageCacheKey = string.Format(PageConfiguration.PageByKeyCacheKey, keyName);
+
+            if (_cacheEngine.GetCacheObject(pageCacheKey, out PageInfo pageInfo))
+            {
+                return pageInfo;
+            }
+
+            if (getAll)
+            {
+                page = await _dbContext.KastraPages
+                    .Include(p => p.PageTemplate.KastraPlaces)
+                    .SingleOrDefaultAsync(p => p.KeyName == keyName);
+
+                if (page is null)
+                {
+                    return null;
+                }
+
+                pageInfo = page.ToPageInfo(true, true);
+
+                foreach (var place in pageInfo.PageTemplate.Places)
+                {
+                    if(place.ModuleId.HasValue)
+                    {
+                        place.StaticModule = await GetModuleAsync(place.ModuleId.Value, true, false);
+                    }
+
+                    place.Modules = await GetModulesListByPlaceIdAsync(place.PlaceId, true);
+                }
+                    
+            }
+            else
+            {
+                page = await _dbContext.KastraPages.SingleOrDefaultAsync(p => p.KeyName == keyName);
+
+                if (page is null)
+                {
+                    return null;
+                }
+
+                pageInfo = page.ToPageInfo();
+            }
+
+            _cacheEngine.SetCacheObject(pageCacheKey, pageInfo);
+
+            return pageInfo;
+        }
+
+        /// <inheritdoc cref="IViewManager.DeletePageAsync(int)" />
+        public async Task<bool> DeletePageAsync(int pageID)
         {
             if (pageID < 1)
+            {
                 return false;
+            }
 
-            Page page = _dbContext.KastraPages.SingleOrDefault(p => p.PageId == pageID);
+            Page page = await _dbContext.KastraPages.SingleOrDefaultAsync(p => p.PageId == pageID);
 
-            if (page == null)
+            if (page is null)
+            {
                 return false;
+            }
 
             _dbContext.KastraPages.Remove(page);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Page");
@@ -209,24 +223,29 @@ namespace Kastra.Business
 
         #region Page template
 
-        public IList<TemplateInfo> GetPageTemplatesList()
+        /// <inheritdoc cref="IViewManager.GetPageTemplatesListAsync" />
+        public async Task<IList<TemplateInfo>> GetPageTemplatesListAsync()
         {
-            if (_dbContext == null)
+            if (_dbContext is null)
+            {
                 return null;
+            }
 
-            return _dbContext.KastraPageTemplates
+            return await _dbContext.KastraPageTemplates
                 .Select(t => t.ToTemplateInfo(false, false))
-                .ToList(); ;
+                .ToListAsync();
         }
 
-        public TemplateInfo GetPageTemplate(int pageTemplateID)
+        /// <inheritdoc cref="IViewManager.GetPageTemplateAsync(int)" />
+        public async Task<TemplateInfo> GetPageTemplateAsync(int pageTemplateID)
         {
-            return _dbContext.KastraPageTemplates
-                .SingleOrDefault(pt => pt.PageTemplateId == pageTemplateID)
+            return (await _dbContext.KastraPageTemplates
+                .SingleOrDefaultAsync(pt => pt.PageTemplateId == pageTemplateID))
                 .ToTemplateInfo();
         }
 
-        public bool SavePageTemplate(TemplateInfo templateInfo)
+        /// <inheritdoc cref="IViewManager.SavePageTemplateAsync(TemplateInfo)" />
+        public async Task<bool> SavePageTemplateAsync(TemplateInfo templateInfo)
         {
             PageTemplate template = null;
 
@@ -237,8 +256,8 @@ namespace Kastra.Business
 
             if (templateInfo.TemplateId > 0)
             {
-                template = _dbContext.KastraPageTemplates
-                    .SingleOrDefault(pt => pt.PageTemplateId == templateInfo.TemplateId);
+                template = await _dbContext.KastraPageTemplates
+                    .SingleOrDefaultAsync(pt => pt.PageTemplateId == templateInfo.TemplateId);
             }
 
             if (template is null)
@@ -260,7 +279,7 @@ namespace Kastra.Business
                 _dbContext.KastraPageTemplates.Add(template);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             templateInfo.TemplateId = template.PageTemplateId;
 
@@ -270,15 +289,16 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeletePageTemplate(int pageTemplateID)
+        /// <inheritdoc cref="IViewManager.DeletePageTemplateAsync(int)" />
+        public async Task<bool> DeletePageTemplateAsync(int pageTemplateID)
         {
             if (pageTemplateID < 1)
             {
                 return false;
             }
 
-            PageTemplate pageTemplate = _dbContext.KastraPageTemplates
-                .SingleOrDefault(p => p.PageTemplateId == pageTemplateID);
+            PageTemplate pageTemplate = await _dbContext.KastraPageTemplates
+                .SingleOrDefaultAsync(p => p.PageTemplateId == pageTemplateID);
 
             if (pageTemplate is null)
             {
@@ -286,7 +306,8 @@ namespace Kastra.Business
             }
 
             _dbContext.KastraPageTemplates.Remove(pageTemplate);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Template");
@@ -298,30 +319,33 @@ namespace Kastra.Business
 
         #region Place
 
-        public IList<PlaceInfo> GetPlacesList(bool includeModules = false)
+        /// <inheritdoc cref="IViewManager.GetPlacesListAsync(bool)" />
+        public async Task<IList<PlaceInfo>> GetPlacesListAsync(bool includeModules = false)
         {
-            return _dbContext.KastraPlaces
+            return await _dbContext.KastraPlaces
                 .Include(p => p.KastraModules)
                 .Select(p => p.ToPlaceInfo(includeModules))
-                .ToList();
+                .ToListAsync();
         }
 
-        public PlaceInfo GetPlace(int placeID)
+        /// <inheritdoc cref="IViewManager.GetPlaceAsync(int)" />
+        public async Task<PlaceInfo> GetPlaceAsync(int placeID)
         {
-            return _dbContext.KastraPlaces
-                .SingleOrDefault(pt => pt.PlaceId == placeID)
+            return (await _dbContext.KastraPlaces
+                .SingleOrDefaultAsync(pt => pt.PlaceId == placeID))
                 .ToPlaceInfo();
         }
 
-        public bool SavePlace(PlaceInfo place)
+        /// <inheritdoc cref="IViewManager.SavePlaceAsync(PlaceInfo)" />
+        public async Task<bool> SavePlaceAsync(PlaceInfo place)
         {
             if (place is null)
             {
                 return false;
             }
 
-            Place currentPlace = _dbContext.KastraPlaces
-                .SingleOrDefault(p => p.PlaceId == place.PlaceId);
+            Place currentPlace = await _dbContext.KastraPlaces
+                .SingleOrDefaultAsync(p => p.PlaceId == place.PlaceId);
 
             if (currentPlace != null)
             {
@@ -337,7 +361,7 @@ namespace Kastra.Business
                 _dbContext.KastraPlaces.Add(place.ToPlace());
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Place");
@@ -345,15 +369,16 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeletePlace(int placeID)
+        /// <inheritdoc cref="IViewManager.DeletePlaceAsync(int)" />
+        public async Task<bool> DeletePlaceAsync(int placeID)
         {
             if (placeID < 1)
             {
                 return false;
             }
 
-            Place place = _dbContext.KastraPlaces
-                .SingleOrDefault(p => p.PlaceId == placeID);
+            Place place = await _dbContext.KastraPlaces
+                .SingleOrDefaultAsync(p => p.PlaceId == placeID);
 
             if (place is null)
             {
@@ -361,7 +386,8 @@ namespace Kastra.Business
             }
 
             _dbContext.KastraPlaces.Remove(place);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Place");
@@ -373,32 +399,38 @@ namespace Kastra.Business
 
         #region Module Definition
 
-        public ModuleDefinitionInfo GetModuleDef(int moduleDefID, bool getModuleControls = false)
+        /// <inheritdoc cref="IViewManager.GetModuleDefAsync(int, bool)" />
+        public async Task<ModuleDefinitionInfo> GetModuleDefAsync(int moduleDefID, bool getModuleControls = false)
         {
             ModuleDefinition moduleDefinition = null;
 
             if (getModuleControls)
             {
-                moduleDefinition = _dbContext.KastraModuleDefinitions.Include(md => md.ModuleControls).SingleOrDefault(pt => pt.ModuleDefId == moduleDefID);
+                moduleDefinition = await _dbContext.KastraModuleDefinitions
+                    .Include(md => md.ModuleControls)
+                    .SingleOrDefaultAsync(pt => pt.ModuleDefId == moduleDefID);
             }
             else
             {
-                moduleDefinition = _dbContext.KastraModuleDefinitions.SingleOrDefault(pt => pt.ModuleDefId == moduleDefID);
+                moduleDefinition = await _dbContext.KastraModuleDefinitions
+                    .SingleOrDefaultAsync(pt => pt.ModuleDefId == moduleDefID);
             }
 
             return moduleDefinition.ToModuleDefinitionInfo(true, true);
         }
 
-        public IList<ModuleDefinitionInfo> GetModuleDefsList()
+        /// <inheritdoc cref="IViewManager.GetModuleDefsListAsync" />
+        public async Task<IList<ModuleDefinitionInfo>> GetModuleDefsListAsync()
         {
-            return _dbContext.KastraModuleDefinitions
+            return await _dbContext.KastraModuleDefinitions
                 .Select(md => md.ToModuleDefinitionInfo(false, false))
-                .ToList();
+                .ToListAsync();
         }
 
-        public bool SaveModuleDef(ModuleDefinitionInfo moduleDefinition)
+        /// <inheritdoc cref="IViewManager.SaveModuleDefAsync(ModuleDefinitionInfo)" />
+        public async Task<bool> SaveModuleDefAsync(ModuleDefinitionInfo moduleDefinition)
         {
-            ModuleDefinition newModuleDefinition = null;
+            ModuleDefinition newModuleDefinition;
 
             if (moduleDefinition is null)
             {
@@ -416,7 +448,7 @@ namespace Kastra.Business
                 _dbContext.KastraModuleDefinitions.Add(newModuleDefinition);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
@@ -424,15 +456,16 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeleteModuleDef(int moduleDefinitionId)
+        /// <inheritdoc cref="IViewManager.DeleteModuleDefAsync(int)" />
+        public async Task<bool> DeleteModuleDefAsync(int moduleDefinitionId)
         {
             if (moduleDefinitionId < 1)
             {
                 return false;
             }
 
-            ModuleDefinition moduleDef = _dbContext.KastraModuleDefinitions
-                .SingleOrDefault(p => p.ModuleDefId == moduleDefinitionId);
+            ModuleDefinition moduleDef = await _dbContext.KastraModuleDefinitions
+                .SingleOrDefaultAsync(p => p.ModuleDefId == moduleDefinitionId);
 
             if (moduleDef is null)
             {
@@ -440,7 +473,8 @@ namespace Kastra.Business
             }
 
             _dbContext.KastraModuleDefinitions.Remove(moduleDef);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
@@ -452,8 +486,12 @@ namespace Kastra.Business
 
         #region Module
 
-        public ModuleInfo GetModule(int moduleID, bool includeModuleDef = false, bool includePlace = false)
-        {
+        /// <inheritdoc cref="IViewManager.GetModuleAsync(int, bool, bool)" />
+        public async Task<ModuleInfo> GetModuleAsync(
+            int moduleID, 
+            bool includeModuleDef = false, 
+            bool includePlace = false
+        ) {
             IQueryable<Module> query = _dbContext.KastraModules
                 .Include(m => m.ModulePermissions)
                 .ThenInclude(m => m.Permission);
@@ -468,32 +506,31 @@ namespace Kastra.Business
                 query = query.Include(m => m.Place);
             }
 
-            return query
-                .SingleOrDefault(pt => pt.ModuleId == moduleID)
+            return (await query
+                .SingleOrDefaultAsync(pt => pt.ModuleId == moduleID))
                 .ToModuleInfo(true);
         }
-
-        public IList<ModuleInfo> GetModulesList(bool includeModuleControls = false)
+        
+        /// <inheritdoc cref="IViewManager.GetModulesListAsync(bool)" />
+        public async Task<IList<ModuleInfo>> GetModulesListAsync(bool includeModuleControls = false)
         {
-            IList<Module> modulesList = null;
-
             if (includeModuleControls)
             {
-                modulesList = _dbContext.KastraModules
+                return await _dbContext.KastraModules
                     .Include(m => m.ModuleDefinition.ModuleControls)
-                    .ToList();
+                    .Select(m => m.ToModuleInfo(false))
+                    .ToListAsync();
             }
             else
             {
-                modulesList = _dbContext.KastraModules.ToList();
+                return await _dbContext.KastraModules
+                    .Select(m => m.ToModuleInfo(false))
+                    .ToListAsync();
             }
-
-            return modulesList
-                .Select(m => m.ToModuleInfo(false))
-                .ToList();
         }
 
-        public IList<ModuleInfo> GetModulesListByPlaceId(int placeId, bool includeModulePermissions = false)
+        /// <inheritdoc cref="IViewManager.GetModulesListByPlaceIdAsync(int, bool)"/>
+        public async Task<IList<ModuleInfo>> GetModulesListByPlaceIdAsync(int placeId, bool includeModulePermissions = false)
         {
             IQueryable<Module> query = _dbContext.KastraModules;
 
@@ -505,13 +542,14 @@ namespace Kastra.Business
                     .ThenInclude(m => m.Permission);
             }
 
-            return query
+            return await query
                 .Where(m => m.PlaceId == placeId)
                 .Select(m => m.ToModuleInfo(includeModulePermissions))
-                .ToList();
+                .ToListAsync();
         }
 
-        public IList<ModuleInfo> GetModulesListByPageId(int pageId, bool includeModulePermissions = false)
+        /// <inheritdoc cref="IViewManager.GetModulesListByPageIdAsync(int, bool)" />
+        public async Task<IList<ModuleInfo>> GetModulesListByPageIdAsync(int pageId, bool includeModulePermissions = false)
         {
             IQueryable<Module> query = _dbContext.KastraModules;
 
@@ -523,15 +561,16 @@ namespace Kastra.Business
                     .ThenInclude(m => m.Permission);
             }
 
-            return query
+            return await query
                 .Where(m => m.PageId == pageId)
                 .Select(m => m.ToModuleInfo(includeModulePermissions))
-                .ToList();
+                .ToListAsync();
         }
 
-        public bool SaveModule(ModuleInfo module)
+        /// <inheritdoc cref="IViewManager.SaveModuleAsync(ModuleInfo)" />
+        public async Task<bool> SaveModuleAsync(ModuleInfo module)
         {
-            Module newModule = null;
+            Module newModule;
 
             if (module is null)
             {
@@ -549,7 +588,7 @@ namespace Kastra.Business
                 _dbContext.KastraModules.Add(newModule);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             //Get module id
             module.ModuleId = newModule.ModuleId;
@@ -561,17 +600,18 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeleteModule(int moduleId)
+        /// <inheritdoc cref="IViewManager.DeleteModuleAsync(int)" />
+        public async Task<bool> DeleteModuleAsync(int moduleId)
         {
             if (moduleId < 1)
             {
                 return false;
             }
 
-            Module module = _dbContext.KastraModules
+            Module module = await _dbContext.KastraModules
                 .Include(m => m.ModulePermissions)
                 .Include(m => m.Place)
-                .SingleOrDefault(p => p.ModuleId == moduleId);
+                .SingleOrDefaultAsync(p => p.ModuleId == moduleId);
 
             if (module is null)
             {
@@ -585,7 +625,8 @@ namespace Kastra.Business
             }
 
             _dbContext.KastraModules.Remove(module);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
@@ -598,32 +639,35 @@ namespace Kastra.Business
 
         #region Module control
 
-        public ModuleControlInfo GetModuleControl(int moduleControlId)
+        /// <inheritdoc cref="IViewManager.GetModuleControlAsync(int)" />
+        public async Task<ModuleControlInfo> GetModuleControlAsync(int moduleControlId)
         {
-            return _dbContext.KastraModuleControls
-                .SingleOrDefault(mc => mc.ModuleControlId == moduleControlId)
+            return (await _dbContext.KastraModuleControls
+                .SingleOrDefaultAsync(mc => mc.ModuleControlId == moduleControlId))
                 .ToModuleControlInfo();
         }
 
-        public IList<ModuleControlInfo> GetModuleControlsList(int moduleDefinitionId)
+        /// <inheritdoc cref="IViewManager.GetModuleControlsListAsync(int)" />
+        public async Task<IList<ModuleControlInfo>> GetModuleControlsListAsync(int moduleDefinitionId)
         {
-            return _dbContext.KastraModuleControls
+            return await _dbContext.KastraModuleControls
                 .Where(mc => mc.ModuleDefinitionId == moduleDefinitionId)
                 .Select(mc => mc.ToModuleControlInfo())
-                .ToList();
+                .ToListAsync();
         }
 
-        public bool SaveModuleControl(ModuleControlInfo moduleControlInfo)
+        /// <inheritdoc cref="IViewManager.SaveModuleControlAsync(ModuleControlInfo)" />
+        public async Task<bool> SaveModuleControlAsync(ModuleControlInfo moduleControlInfo)
         {
             if (moduleControlInfo is null)
             {
                 return false;
             }
 
-            ModuleControl moduleControl = _dbContext.KastraModuleControls
-                .SingleOrDefault(mc => mc.ModuleControlId == moduleControlInfo.ModuleControlId);
+            ModuleControl moduleControl = await _dbContext.KastraModuleControls
+                .SingleOrDefaultAsync(mc => mc.ModuleControlId == moduleControlInfo.ModuleControlId);
 
-            ModuleDefinitionInfo moduleDef = GetModuleDef(moduleControlInfo.ModuleDefId);
+            ModuleDefinitionInfo moduleDef = await GetModuleDefAsync(moduleControlInfo.ModuleDefId);
 
             if (moduleDef is null)
             {
@@ -641,7 +685,7 @@ namespace Kastra.Business
                 _dbContext.KastraModuleControls.Add(moduleControl);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
@@ -649,15 +693,16 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeleteModuleControl(int moduleControlId)
+        /// <inheritdoc cref="IViewManager.DeleteModuleControlAsync(int)" />
+        public async Task<bool> DeleteModuleControlAsync(int moduleControlId)
         {
             if (moduleControlId < 1)
             {
                 return false;
             }
 
-            ModuleControl moduleControl = _dbContext.KastraModuleControls
-                .SingleOrDefault(p => p.ModuleControlId == moduleControlId);
+            ModuleControl moduleControl = await _dbContext.KastraModuleControls
+                .SingleOrDefaultAsync(p => p.ModuleControlId == moduleControlId);
 
             if (moduleControl is null)
             {
@@ -665,7 +710,8 @@ namespace Kastra.Business
             }
 
             _dbContext.KastraModuleControls.Remove(moduleControl);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
@@ -677,30 +723,33 @@ namespace Kastra.Business
 
         #region Module Navigation
 
-        public IList<ModuleNavigationInfo> GetModuleNavigationList(int moduleDefinitionId)
+        /// <inheritdoc cref="IViewManager.GetModuleNavigationListAsync(int)" />
+        public async Task<IList<ModuleNavigationInfo>> GetModuleNavigationListAsync(int moduleDefinitionId)
         {
-            return _dbContext.KastraModuleNavigations
+            return await _dbContext.KastraModuleNavigations
                 .Where(mc => mc.ModuleDefinitionId == moduleDefinitionId)
                 .Select(mc => mc.ToModuleNavigationInfo())
-                .ToList();
+                .ToListAsync();
         }
 
-        public IList<ModuleNavigationInfo> GetModuleNavigationListByType(string type)
+        /// <inheritdoc cref="IViewManager.GetModuleNavigationListByTypeAsync(string)" />
+        public async Task<IList<ModuleNavigationInfo>> GetModuleNavigationListByTypeAsync(string type)
         {
-            return _dbContext.KastraModuleNavigations
+            return await _dbContext.KastraModuleNavigations
                 .Where(mc => mc.Type == type)
                 .Select(mc => mc.ToModuleNavigationInfo())
-                .ToList();
+                .ToListAsync();
         }
 
-        public bool SaveModuleNavigation(ModuleNavigationInfo moduleNavigation)
+        /// <inheritdoc cref="IViewManager.SaveModuleNavigationAsync(ModuleNavigationInfo)" />
+        public async Task<bool> SaveModuleNavigationAsync(ModuleNavigationInfo moduleNavigation)
         {
             if (moduleNavigation is null)
             {
                 return false;
             }
 
-            ModuleDefinitionInfo moduleDef = GetModuleDef(moduleNavigation.ModuleDefinitionId);
+            ModuleDefinitionInfo moduleDef = await GetModuleDefAsync(moduleNavigation.ModuleDefinitionId);
 
             if (moduleDef is null)
             {
@@ -708,7 +757,7 @@ namespace Kastra.Business
             }
 
             ModuleNavigation navigation = moduleNavigation.Id > 0 ? 
-                _dbContext.KastraModuleNavigations.SingleOrDefault(mn => mn.Id == moduleNavigation.Id) : null;
+                await _dbContext.KastraModuleNavigations.SingleOrDefaultAsync(mn => mn.Id == moduleNavigation.Id) : null;
 
             navigation = moduleNavigation.ToModuleNavigation();
 
@@ -721,7 +770,7 @@ namespace Kastra.Business
                 _dbContext.KastraModuleNavigations.Add(navigation);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");
@@ -729,15 +778,16 @@ namespace Kastra.Business
             return true;
         }
 
-        public bool DeleteModuleNavigation(int moduleNavigationId)
+        /// <inheritdoc cref="IViewManager.DeleteModuleNavigationAsync(int)" />
+        public async Task<bool> DeleteModuleNavigationAsync(int moduleNavigationId)
         {
             if (moduleNavigationId < 1)
             {
                 return false;
             }
 
-            ModuleNavigation moduleNavigation = _dbContext.KastraModuleNavigations
-                .SingleOrDefault(p => p.Id == moduleNavigationId);
+            ModuleNavigation moduleNavigation = await _dbContext.KastraModuleNavigations
+                .SingleOrDefaultAsync(p => p.Id == moduleNavigationId);
 
             if (moduleNavigation is null)
             {
@@ -745,7 +795,8 @@ namespace Kastra.Business
             }
 
             _dbContext.KastraModuleNavigations.Remove(moduleNavigation);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             // Clear cache
             _cacheEngine.ClearCacheContains("Module");

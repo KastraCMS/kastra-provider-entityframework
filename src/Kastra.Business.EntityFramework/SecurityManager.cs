@@ -7,6 +7,8 @@ using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kastra.Business
 {
@@ -14,8 +16,8 @@ namespace Kastra.Business
     {
 		#region Private members
 
-		private readonly KastraDbContext _dbContext = null;
-		private readonly CacheEngine _cacheEngine = null;
+		private readonly KastraDbContext _dbContext;
+		private readonly CacheEngine _cacheEngine;
 
 		#endregion
 
@@ -27,24 +29,31 @@ namespace Kastra.Business
 
         #region Module permission
 
-        public IList<ModulePermissionInfo> GetModulePermissionsByModuleId(Int32 moduleId)
+		/// <inheritdoc cref="ISecurityManager.GetModulePermissionsByModuleIdAsync(int)" />
+        public async Task<IList<ModulePermissionInfo>> GetModulePermissionsByModuleIdAsync(int moduleId)
 		{
-			IList<ModulePermissionInfo> modulePermissions = _dbContext.KastraModulePermissions
-																	  .Where(mp => mp.ModuleId == moduleId).ToList()
-																	  .Select(mp => ModulePermissionMapper.ToModulePermissionInfo(mp)).ToList();
+			IList<ModulePermissionInfo> modulePermissions = await _dbContext.KastraModulePermissions
+																	  .Where(mp => mp.ModuleId == moduleId)
+																	  .Select(mp => mp.ToModulePermissionInfo())
+																	  .ToListAsync();
 			return modulePermissions;
 		}
 
-		public Boolean SaveModulePermission(ModulePermissionInfo modulePermissionInfo)
+		/// <inheritdoc cref="ISecurityManager.SaveModulePermissionAsync(ModulePermissionInfo)" />
+		public async Task<bool> SaveModulePermissionAsync(ModulePermissionInfo modulePermissionInfo)
 		{
 			ModulePermission modulePermission = modulePermissionInfo.ToModulePermission();
 
 			if (modulePermissionInfo.ModulePermissionId > 0)
+            {
 				_dbContext.KastraModulePermissions.Update(modulePermission);
+            }
 			else
+            {
 				_dbContext.KastraModulePermissions.Add(modulePermission);
+            }
 
-			_dbContext.SaveChanges();
+			await _dbContext.SaveChangesAsync();
 
 			// Clear cache
 			_cacheEngine.ClearCacheContains("Module");
@@ -52,18 +61,24 @@ namespace Kastra.Business
 			return true;
 		}
 
-		public Boolean DeleteModulePermission(Int32 modulePermissionId)
+		/// <inheritdoc cref="ISecurityManager.DeleteModulePermissionAsync(int)" />
+		public async Task<bool> DeleteModulePermissionAsync(int modulePermissionId)
 		{
 			if (modulePermissionId < 1)
+            {
 				return false;
+            }
 
-			ModulePermission modulePermission = _dbContext.KastraModulePermissions.SingleOrDefault(p => p.ModulePermissionId == modulePermissionId);
+			ModulePermission modulePermission = await _dbContext.KastraModulePermissions.SingleOrDefaultAsync(p => p.ModulePermissionId == modulePermissionId);
 
-			if (modulePermission == null)
+			if (modulePermission is null)
+            {
 				return false;
+            }
 
 			_dbContext.KastraModulePermissions.Remove(modulePermission);
-			_dbContext.SaveChanges();
+
+			await _dbContext.SaveChangesAsync();
 
 			// Clear cache
 			_cacheEngine.ClearCacheContains("Module");
@@ -71,18 +86,24 @@ namespace Kastra.Business
 			return true;
 		}
 
-		public Boolean DeleteModulePermission(Int32 moduleId, Int32 permissionId)
+		/// <inheritdoc cref="ISecurityManager.DeleteModulePermissionAsync(int)"/>
+		public async Task<bool> DeleteModulePermissionAsync(int moduleId, int permissionId)
 		{
 			if (moduleId < 1)
+            {
 				return false;
+            }
 
-			ModulePermission modulePermission = _dbContext.KastraModulePermissions.SingleOrDefault(p => p.ModuleId == moduleId && p.PermissionId == permissionId);
+			ModulePermission modulePermission = await _dbContext.KastraModulePermissions.SingleOrDefaultAsync(p => p.ModuleId == moduleId && p.PermissionId == permissionId);
 
-			if (modulePermission == null)
+			if (modulePermission is null)
+            {
 				return false;
+            }
 
 			_dbContext.KastraModulePermissions.Remove(modulePermission);
-			_dbContext.SaveChanges();
+
+			await _dbContext.SaveChangesAsync();
 
 			// Clear cache
 			_cacheEngine.ClearCacheContains("Module");
@@ -94,24 +115,31 @@ namespace Kastra.Business
 
 		#region Permissions
 
-		public IList<PermissionInfo> GetPermissionsList()
+		/// <inheritdoc cref="ISecurityManager.GetPermissionsListAsync" />
+		public async Task<IList<PermissionInfo>> GetPermissionsListAsync()
 		{
-			IList<PermissionInfo> permissions = _dbContext.KastraPermissions.ToList()
-														  .Select(p => PermissionMapper.ToPermissionInfo(p)).ToList();
+			IList<PermissionInfo> permissions = await _dbContext.KastraPermissions
+													.Select(p => p.ToPermissionInfo(false))
+													.ToListAsync();
 
 			return permissions;
 		}
 
-        public bool SavePermission(PermissionInfo permissionInfo)
+		/// <inheritdoc cref="ISecurityManager.SavePermissionAsync(PermissionInfo)" />
+        public async Task<bool> SavePermissionAsync(PermissionInfo permissionInfo)
         {
 			Permission permission = permissionInfo.ToPermission();
 
 			if (permissionInfo.PermissionId > 0)
+            {
 				_dbContext.KastraPermissions.Update(permission);
+            }
 			else
+            {
 				_dbContext.KastraPermissions.Add(permission);
+            }
 
-			_dbContext.SaveChanges();
+			await _dbContext.SaveChangesAsync();
 
             // Return permission id
             permissionInfo.PermissionId = permission.PermissionId;
@@ -122,15 +150,19 @@ namespace Kastra.Business
 			return true;
         }
 
-        public Boolean DeletePermission(Int32 permissionId)
+		/// <inheritdoc cref="ISecurityManager.DeletePermissionAsync(int)" />
+        public async Task<bool> DeletePermissionAsync(int permissionId)
         {
-			Permission permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.PermissionId == permissionId);
+			Permission permission = await _dbContext.KastraPermissions.SingleOrDefaultAsync(p => p.PermissionId == permissionId);
 
-			if (permission == null)
+			if (permission is null)
+            {
 				return false;
+            }
 
 			_dbContext.KastraPermissions.Remove(permission);
-			_dbContext.SaveChanges();
+
+			await _dbContext.SaveChangesAsync();
 
 			// Clear cache
 			_cacheEngine.ClearCacheContains("Module");
@@ -138,18 +170,20 @@ namespace Kastra.Business
 			return true;
         }
 
-        public PermissionInfo GetPermissionById(Int32 permissionId)
+		/// <inheritdoc cref="ISecurityManager.GetPermissionByIdAsync(int)" />
+        public async Task<PermissionInfo> GetPermissionByIdAsync(int permissionId)
         {
-            Permission permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.PermissionId == permissionId);
+            Permission permission = await _dbContext.KastraPermissions.SingleOrDefaultAsync(p => p.PermissionId == permissionId);
 
-            return permission?.ToPermissionInfo();
+            return permission.ToPermissionInfo();
         }
 
-        public PermissionInfo GetPermissionByName(String name)
+		/// <inheritdoc cref="ISecurityManager.GetPermissionByNameAsync(string)" />
+        public async Task<PermissionInfo> GetPermissionByNameAsync(string name)
         {
-            Permission permission = _dbContext.KastraPermissions.SingleOrDefault(p => p.Name == name);
+            Permission permission = await _dbContext.KastraPermissions.SingleOrDefaultAsync(p => p.Name == name);
 
-			return permission?.ToPermissionInfo();
+			return permission.ToPermissionInfo();
         }
 
         #endregion

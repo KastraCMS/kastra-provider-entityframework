@@ -7,6 +7,8 @@ using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kastra.Business
 {
@@ -16,8 +18,8 @@ namespace Kastra.Business
 
         #region Private members
 
-        private readonly KastraDbContext _dbContext = null;
-        private readonly CacheEngine _cacheEngine = null;
+        private readonly KastraDbContext _dbContext;
+        private readonly CacheEngine _cacheEngine;
 
         #endregion
 
@@ -27,9 +29,10 @@ namespace Kastra.Business
             _cacheEngine = cacheEngine;
         }
 
-        public bool SaveVisitor(VisitorInfo visitorInfo)
+        /// <inheritdoc cref="IStatisticsManager.SaveVisitorAsync(VisitorInfo)"/>
+        public async Task<bool> SaveVisitorAsync(VisitorInfo visitorInfo)
         {
-            if (visitorInfo == null)
+            if (visitorInfo is null)
             {
                 throw new ArgumentNullException(nameof(visitorInfo));
             }
@@ -61,7 +64,7 @@ namespace Kastra.Business
                         visit.UserId = visit.UserId;
 
                         _dbContext.KastraVisitors.Update(visit);
-                        _dbContext.SaveChanges();
+                        await _dbContext.SaveChangesAsync();
 
                         return true;
                     }
@@ -77,6 +80,7 @@ namespace Kastra.Business
             {
                 recentVisitors = new Dictionary<string, bool>();
                 recentVisitors.Add(visitorInfo.IpAddress, isLoggedIn);
+
                 _cacheEngine.SetCacheObject(VISITS_KEY, recentVisitors);
             }
 
@@ -84,30 +88,35 @@ namespace Kastra.Business
             Visitor visitor = visitorInfo.ToVisitor();
 
             _dbContext.KastraVisitors.Add(visitor);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             return true;
         }
 
-        public int CountVisitsFromTo(DateTime fromDate, DateTime toDate)
+        /// <inheritdoc cref="IStatisticsManager.CountVisitsFromToAsync(DateTime, DateTime)"/>
+        public async Task<int> CountVisitsFromToAsync(DateTime fromDate, DateTime toDate)
         {
-            return _dbContext.KastraVisitors.Where(v => v.LastVisitAt >= fromDate && v.LastVisitAt <= toDate).Count();
+            return await _dbContext.KastraVisitors
+                .Where(v => v.LastVisitAt >= fromDate && v.LastVisitAt <= toDate)
+                .CountAsync();
         }
 
-        public IList<VisitorInfo> GetVisitsByUserId(Guid userId)
+        /// <inheritdoc cref="IStatisticsManager.GetVisitsByUserIdAsync(Guid)"/>
+        public async Task<IList<VisitorInfo>> GetVisitsByUserIdAsync(Guid userId)
         {
-            return _dbContext.KastraVisitors
+            return await _dbContext.KastraVisitors
                 .Where(v => v.UserId == userId)
                 .Select(v => v.ToVisitorInfo())
-                .ToList();
+                .ToListAsync();
         }
 
-        public IList<VisitorInfo> GetVisitsFromDate(DateTime fromDate, DateTime toDate)
+        /// <inheritdoc cref="IStatisticsManager.GetVisitsFromDateAsync(DateTime, DateTime)"/>
+        public async Task<IList<VisitorInfo>> GetVisitsFromDateAsync(DateTime fromDate, DateTime toDate)
         {
-            return _dbContext.KastraVisitors
+            return await _dbContext.KastraVisitors
                 .Where(v => v.LastVisitAt >= fromDate && v.LastVisitAt <= toDate)
                 .Select(v => v.ToVisitorInfo())
-                .ToList();
+                .ToListAsync();
         }
     }
 }

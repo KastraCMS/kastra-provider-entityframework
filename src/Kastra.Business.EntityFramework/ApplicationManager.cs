@@ -5,6 +5,7 @@ using Kastra.Core.Constants;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Kastra.Business
 {
@@ -17,39 +18,44 @@ namespace Kastra.Business
             _dbContext = dbContext;
         }
 
-        public void Install()
+        /// <inheritdoc cref="IApplicationManager.InstallAsync"/>
+        public async Task InstallAsync()
         {
             // Create database
-            _dbContext.Database.Migrate();
+            await _dbContext.Database.MigrateAsync();
 
-            InstallDefaultParameters();
+            await InstallDefaultParametersAsync();
 
-            InstallDefaultMailTemplates();
+            await InstallDefaultMailTemplatesAsync();
         }
 
-        public void InstallDefaultPage()
+        /// <inheritdoc cref="IApplicationManager.InstallDefaultPageAsync" />
+        public async Task InstallDefaultPageAsync()
         {
-            Page home = _dbContext.KastraPages.SingleOrDefault(p => p.KeyName.ToLower() == "home");
-            PageTemplate template = _dbContext.KastraPageTemplates
-                                                .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
+            Page home = await _dbContext.KastraPages.SingleOrDefaultAsync(p => p.KeyName.ToLower() == "home");
+            PageTemplate template = await _dbContext.KastraPageTemplates
+                                                .SingleOrDefaultAsync(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
 
-            if(home == null && template != null)
+            if(home is null && template is not null)
             {
-                home = new Page();
-                home.KeyName = "home";
-                home.MetaDescription = "My home page";
-                home.PageTemplateId = template.PageTemplateId;
-                home.Title = "Home";
-                home.MetaKeywords = string.Empty;
-                home.MetaDescription = string.Empty;
-                home.MetaRobot = string.Empty;
+                home = new ()
+                {
+                    KeyName = "home",
+                    PageTemplateId = template.PageTemplateId,
+                    Title = "Home",
+                    MetaKeywords = string.Empty,
+                    MetaDescription = string.Empty,
+                    MetaRobot = string.Empty
+                };
 
                 _dbContext.KastraPages.Add(home);
-                _dbContext.SaveChanges();
+
+                await _dbContext.SaveChangesAsync();
             }
         }
 
-        public void InstallDefaultTemplate()
+        /// <inheritdoc cref="IApplicationManager.InstallDefaultTemplateAsync" />
+        public async Task InstallDefaultTemplateAsync()
         {
             Place place = null;
 
@@ -57,32 +63,40 @@ namespace Kastra.Business
             PageTemplate template = _dbContext.KastraPageTemplates
                                                 .SingleOrDefault(t => t.KeyName == SiteConfiguration.DefaultPageTemplateKeyName);
 
-            if (template != null)
+            if (template is not null)
             {
                 return;
             }
 
-            template = new PageTemplate();
-            template.KeyName = SiteConfiguration.DefaultPageTemplateKeyName;
-            template.Name = "Default template";
-            template.ModelClass = "Kastra.Server.Models.Template.DefaultTemplateViewModel";
-            template.ViewPath = "Page";
+            template = new PageTemplate()
+            {
+                KeyName = SiteConfiguration.DefaultPageTemplateKeyName,
+                Name = "Default template",
+                ModelClass = "Kastra.Server.Models.Template.DefaultTemplateViewModel",
+                ViewPath = "Page"
+            };
 
             template.KastraPlaces = new List<Place>();
 
             // Add places
-            place = new Place();
-            place.KeyName = "Header";
+            place = new ()
+            {
+                KeyName = "Header"
+            };
             
             template.KastraPlaces.Add(place);
 
-            place = new Place();
-            place.KeyName = "Body";
+            place = new ()
+            {
+                KeyName = "Body"
+            };
             
             template.KastraPlaces.Add(place);
 
-            place = new Place();
-            place.KeyName = "Footer";
+            place = new Place()
+            {
+                KeyName = "Footer"
+            };
             
             template.KastraPlaces.Add(place);
             
@@ -97,64 +111,82 @@ namespace Kastra.Business
                 return;
             }
 
-            homeTemplate = new PageTemplate();
-            homeTemplate.KeyName = "HomeTemplate";
-            homeTemplate.Name = "Home template";
-            homeTemplate.ModelClass = "Kastra.Server.Models.Template.HomeTemplateViewModel";
-            homeTemplate.ViewPath = "Page";
+            homeTemplate = new ()
+            {
+                KeyName = "HomeTemplate",
+                Name = "Home template",
+                ModelClass = "Kastra.Server.Models.Template.HomeTemplateViewModel",
+                ViewPath = "Page"
+            };
 
             homeTemplate.KastraPlaces = new List<Place>();
 
             // Add places
-            place = new Place();
-            place.KeyName = "Header";
+            place = new ()
+            {
+                KeyName = "Header"
+            };
             
             homeTemplate.KastraPlaces.Add(place);
 
-            place = new Place();
-            place.KeyName = "Body";
+            place = new ()
+            {
+                KeyName = "Body"
+            };
             
             homeTemplate.KastraPlaces.Add(place);
 
-            place = new Place();
-            place.KeyName = "Footer";
+            place = new ()
+            {
+                KeyName = "Footer"
+            };
             
             homeTemplate.KastraPlaces.Add(place);
             
             _dbContext.KastraPageTemplates.Add(homeTemplate);
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
 
-        public void InstallDefaultPermissions()
+        /// <inheritdoc cref="IApplicationManager.InstallDefaultPermissionsAsync" />
+        public async Task InstallDefaultPermissionsAsync()
         {
             // Granted permission
-            Permission permission = new Permission();
-            permission.Name = ModuleConfiguration.GrantedAccessPermission;
+            Permission permission = new()
+            {
+                Name = ModuleConfiguration.GrantedAccessPermission
+            };
             _dbContext.KastraPermissions.Add(permission);
 
             // Read
-            permission = new Permission();
-            permission.Name = ModuleConfiguration.ReadPermission;
+            permission = new ()
+            {
+                Name = ModuleConfiguration.ReadPermission
+            };
             _dbContext.KastraPermissions.Add(permission);
 
             // Edit
-            permission = new Permission();
-            permission.Name = ModuleConfiguration.EditPermission;
+            permission = new ()
+            {
+                Name = ModuleConfiguration.EditPermission
+            };
             _dbContext.KastraPermissions.Add(permission);
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
 
-        public void InstallDefaultParameters()
+        /// <inheritdoc cref="IApplicationManager.InstallDefaultParametersAsync" />
+        public async Task InstallDefaultParametersAsync()
         {
-            Parameter theme = _dbContext.KastraParameters.SingleOrDefault(p => p.Key == "Theme");
+            Parameter theme = await _dbContext.KastraParameters.SingleOrDefaultAsync(p => p.Key == "Theme");
 
-            if(theme == null)
+            if(theme is null)
             {
-                theme = new Parameter();
-                theme.Key = "Theme";
-                theme.Value = "default";
+                theme = new ()
+                {
+                    Key = "Theme",
+                    Value = "default"
+                };
                 _dbContext.Add(theme);
             }
             else
@@ -163,20 +195,21 @@ namespace Kastra.Business
                 _dbContext.Update(theme);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
 
-        public void InstallDefaultMailTemplates()
+        /// <inheritdoc cref="IApplicationManager.InstallDefaultMailTemplatesAsync" />
+        public async Task InstallDefaultMailTemplatesAsync()
         {
-            if (_dbContext.KastraMailTemplates.Any())
+            if (await _dbContext.KastraMailTemplates.AnyAsync())
             {
                 return;
             }
 
             MailTemplate mailTemplate = null;
-            List<MailTemplate> mailTemplates = new List<MailTemplate>();
+            List<MailTemplate> mailTemplates = new ();
 
-            if (!_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == "account.confirmregistration"))
+            if (!(await _dbContext.KastraMailTemplates.AnyAsync(mt => mt.Keyname == "account.confirmregistration")))
             {
                 mailTemplate = new MailTemplate() {
                     Keyname = "account.confirmregistration",
@@ -187,7 +220,7 @@ namespace Kastra.Business
                 mailTemplates.Add(mailTemplate);
             }
             
-            if (!_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == "account.resetpassword"))
+            if (!(await _dbContext.KastraMailTemplates.AnyAsync(mt => mt.Keyname == "account.resetpassword")))
             {
                 mailTemplate = new MailTemplate() {
                     Keyname = "account.resetpassword",
@@ -198,7 +231,7 @@ namespace Kastra.Business
                 mailTemplates.Add(mailTemplate);
             }
 
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

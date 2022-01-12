@@ -8,6 +8,7 @@ using Kastra.Core.DTO;
 using Kastra.Core.Services;
 using Kastra.DAL.EntityFramework;
 using Kastra.DAL.EntityFramework.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kastra.Business
 {
@@ -24,19 +25,20 @@ namespace Kastra.Business
             _emailSender = emailSender;
 		}
 
-        public void AddMailTemplate(string keyname, string subject, string message)
+        /// <inheritdoc cref="IEmailManager.AddMailTemplateAsync(string, string, string)" />
+        public async Task AddMailTemplateAsync(string keyname, string subject, string message)
         {
             if (string.IsNullOrEmpty(keyname))
             {
                 throw new ArgumentNullException(nameof(keyname));
             }
 
-            if (_dbContext.KastraMailTemplates.Any(mt => mt.Keyname == keyname))
+            if (await _dbContext.KastraMailTemplates.AnyAsync(mt => mt.Keyname == keyname))
             {
                 throw new ArgumentException("The keyname already exists");
             }
 
-            MailTemplate mailTemplate = new MailTemplate()
+            MailTemplate mailTemplate = new ()
             {
                 Keyname = keyname,
                 Subject = subject,
@@ -44,31 +46,34 @@ namespace Kastra.Business
             };
 
             _dbContext.KastraMailTemplates.Add(mailTemplate);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             _cacheEngine.ClearCacheContains("Mail_Template");
         }
 
-        public void DeleteMailTemplate(string keyname)
+        /// <inheritdoc cref="IEmailManager.DeleteMailTemplateAsync(string)" />
+        public async Task DeleteMailTemplateAsync(string keyname)
         {
             if (string.IsNullOrEmpty(keyname))
             {
                 throw new ArgumentNullException(nameof(keyname));
             }
 
-            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == keyname);
+            MailTemplate mailTemplate = await _dbContext.KastraMailTemplates.SingleOrDefaultAsync(mt => mt.Keyname == keyname);
 
-            if (mailTemplate == null)
+            if (mailTemplate is null)
             {
                 throw new ArgumentException("The mail template was not found");
             }
 
             _dbContext.KastraMailTemplates.Remove(mailTemplate);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
 
             ClearMailTemplateCache();
         }
 
+        /// <inheritdoc cref="IEmailManager.Format(string, Dictionary{string, string})"/>
         public string Format(string template, Dictionary<string, string> data)
         {
             if (string.IsNullOrEmpty(template))
@@ -76,7 +81,7 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(template));
             }
 
-            if (data == null)
+            if (data is null)
             {
                 return template;
             }
@@ -89,35 +94,33 @@ namespace Kastra.Business
             return template;
         }
 
-        public MailTemplateInfo GetMailTemplate(string keyname)
+        /// <inheritdoc cref="IEmailManager.GetMailTemplateAsync(string)" />
+        public async Task<MailTemplateInfo> GetMailTemplateAsync(string keyname)
         {
             if (string.IsNullOrEmpty(keyname))
             {
                 throw new ArgumentNullException(nameof(keyname));
             }
 
-            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == keyname);
-
-            if (mailTemplate == null)
-            {
-                return null;
-            }
+            MailTemplate mailTemplate = await _dbContext.KastraMailTemplates.SingleOrDefaultAsync(mt => mt.Keyname == keyname);
 
             return mailTemplate.ToMailTemplateInfo();
         }
 
-        public IList<MailTemplateInfo> GetMailTemplates()
+        /// <inheritdoc cref="IEmailManager.GetMailTemplatesAsync"/>
+        public async Task<IList<MailTemplateInfo>> GetMailTemplatesAsync()
         {
             List<MailTemplateInfo> mailTemplates = _dbContext.KastraMailTemplates.Select(mt => mt.ToMailTemplateInfo()).ToList();
 
             if (!_cacheEngine.GetCacheObject("Mail_Templates", out mailTemplates))
             {
-                mailTemplates = _dbContext.KastraMailTemplates.Select(mt => mt.ToMailTemplateInfo()).ToList();
+                mailTemplates = await _dbContext.KastraMailTemplates.Select(mt => mt.ToMailTemplateInfo()).ToListAsync();
             }
             
             return mailTemplates;
         }
 
+        /// <inheritdoc cref="IEmailManager.SendEmail(string, string, Dictionary{string, string})" />
         public void SendEmail(string email, string templateName, Dictionary<string, string> data)
         {
             if (string.IsNullOrEmpty(email))
@@ -143,6 +146,7 @@ namespace Kastra.Business
             _emailSender.SendEmail(email, subject, message);
         }
 
+        /// <inheritdoc cref="IEmailManager.SendEmailAsync(string, string, Dictionary{string, string})" />
         public async Task SendEmailAsync(string email, string templateName, Dictionary<string, string> data)
         {
             if (string.IsNullOrEmpty(email))
@@ -155,9 +159,9 @@ namespace Kastra.Business
                 throw new ArgumentNullException(nameof(templateName));
             }
 
-            MailTemplate mailTemplate = _dbContext.KastraMailTemplates.SingleOrDefault(mt => mt.Keyname == templateName);
+            MailTemplate mailTemplate = await _dbContext.KastraMailTemplates.SingleOrDefaultAsync(mt => mt.Keyname == templateName);
 
-            if (mailTemplate == null)
+            if (mailTemplate is null)
             {
                 throw new NullReferenceException($"{nameof(mailTemplate)} not found.");
             }
@@ -168,15 +172,16 @@ namespace Kastra.Business
             await _emailSender.SendEmailAsync(email, subject, message);
         }
 
-        public void UpdateMailTemplate(MailTemplateInfo mailTemplateInfo)
+        /// <inheritdoc cref="IEmailManager.UpdateMailTemplateAsync(MailTemplateInfo)" />
+        public async Task UpdateMailTemplateAsync(MailTemplateInfo mailTemplateInfo)
         {
             if (mailTemplateInfo is null)
             {
                 throw new ArgumentNullException(nameof(mailTemplateInfo));
             }
 
-            MailTemplate mailTemplate = _dbContext.KastraMailTemplates
-                                                .SingleOrDefault(mt => mt.Keyname == mailTemplateInfo.Keyname);
+            MailTemplate mailTemplate = await _dbContext.KastraMailTemplates
+                                                .SingleOrDefaultAsync(mt => mt.Keyname == mailTemplateInfo.Keyname);
 
             if (mailTemplate == null)
             {
@@ -187,7 +192,8 @@ namespace Kastra.Business
             mailTemplate.Message = mailTemplateInfo.Message;
 
             _dbContext.KastraMailTemplates.Update(mailTemplate);
-            _dbContext.SaveChanges();
+
+            await _dbContext.SaveChangesAsync();
 
             ClearMailTemplateCache();
         }
