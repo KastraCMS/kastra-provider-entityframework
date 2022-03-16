@@ -12,6 +12,8 @@ using Models = Kastra.DAL.EntityFramework.Models;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using nClam;
+using Microsoft.Extensions.Logging;
 
 namespace Kastra.Business
 {
@@ -19,11 +21,13 @@ namespace Kastra.Business
     {
         private readonly KastraDbContext _dbContext;
         private readonly AppSettings _appSettings;
+        private readonly ILogger<FileManager> _logger;
 
-        public FileManager(KastraDbContext dbContext, IConfiguration configuration)
+        public FileManager(KastraDbContext dbContext, IConfiguration configuration, ILogger<FileManager> logger)
         {
             _appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         /// <inheritdoc cref="IFileManager.AddFileAsync(Dto.FileInfo, Stream)"/>
@@ -146,6 +150,42 @@ namespace Kastra.Business
             }
 
             return filesInfo;
+        }
+
+        /// <inheritdoc cref="IFileManager.ScanFileAsync(byte[])" />
+        public async Task<bool> ScanFileAsync(byte[] fileBytes)
+        {
+            ClamAV clamAvSettings = _appSettings.ClamAV;
+
+            if (!clamAvSettings.Enable)
+            {
+                return true;
+            }
+            else if (!string.IsNullOrEmpty(clamAvSettings.Host))
+            {
+                var clamClient = new ClamClient(clamAvSettings.Host, clamAvSettings.Port);
+
+                var result = await clamClient.SendAndScanFileAsync(fileBytes);
+
+                if (result.Result == ClamScanResults.Clean)
+                {
+                    return true;
+                }
+                else
+                {
+                    string message = result.Result switch
+                    {
+                        ClamScanResults.VirusDetected => "Virus detected",
+                        ClamScanResults.Error => "Error in the file",
+                        ClamScanResults.Unknown => "Unknown file",
+                        _ => "No case available"
+                    };
+
+                    _logger.LogWarning(message);
+                }
+            }
+
+            return false;
         }
 
         #region Private methods
