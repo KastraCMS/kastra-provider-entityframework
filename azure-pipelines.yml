@@ -16,6 +16,8 @@ variables:
 
 steps:
 - task: NuGetToolInstaller@1
+  inputs:
+    checkLatest: true
 
 - task: NuGetCommand@2
   inputs:
@@ -49,20 +51,14 @@ steps:
     command: 'custom'
     projects: '**/*.csproj'
     custom: 'pack'
-    arguments: '--version-suffix $(Build.BuildNumber) -c $(buildConfiguration) -p:StaticWebAssetsEnabled=false'
+    arguments: '--version-suffix $(Build.BuildNumber) --output $(build.artifactStagingDirectory) -p:StaticWebAssetsEnabled=false'
     configuration: '$(buildConfiguration)'
-
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet custom'
-  inputs:
-    command: custom
-    projects: '**\*.csproj'
-    custom: pack
-    arguments: '--no-build'
+    vstsFeed: '1268a989-cd48-4170-99de-66c576a8bf1e/773fbe51-e6b4-4d87-90da-996c1a3cb1d5'
+    includeNuGetOrg: true
 
 - task: NuGetCommand@2
   inputs:
     command: 'push'
-    packagesToPush: '**/Kastra.*.nupkg;!/**/*.symbols.nupkg'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/Kastra.*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: '06e37980-b58f-41ad-8139-9f68cd95f858'
