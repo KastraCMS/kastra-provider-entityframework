@@ -49,12 +49,20 @@ steps:
     command: 'custom'
     projects: '**/*.csproj'
     custom: 'pack'
-    arguments: '--version-suffix $(Build.BuildNumber) -c $(buildConfiguration) --output $(build.artifactStagingDirectory) -p:StaticWebAssetsEnabled=false'
+    arguments: '--version-suffix $(Build.BuildNumber) -c $(buildConfiguration) -p:StaticWebAssetsEnabled=false'
     configuration: '$(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet custom'
+  inputs:
+    command: custom
+    projects: '**\*.csproj'
+    custom: pack
+    arguments: '--no-build'
 
 - task: NuGetCommand@2
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/Kastra.*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    packagesToPush: '**/Kastra.*.nupkg;!/**/*.symbols.nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: '06e37980-b58f-41ad-8139-9f68cd95f858'
