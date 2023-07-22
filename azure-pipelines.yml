@@ -30,13 +30,21 @@ steps:
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:SkipInvalidConfigurations=true /p:OutDir="$(Build.ArtifactStagingDirectory)" /p:PackageLocation="$(build.artifactStagingDirectory)" /p:VersionSuffix="$(Build.BuildNumber)"'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)" /p:VersionSuffix="$(Build.BuildNumber)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    projects: '**/*.csproj'
+    custom: 'pack'
+    arguments: '--no-build --version-suffix $(Build.BuildNumber) -c $(buildConfiguration) --output $(build.artifactStagingDirectory) -p:StaticWebAssetsEnabled=false'
     configuration: '$(buildConfiguration)'
 
 - task: NuGetCommand@2
