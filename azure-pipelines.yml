@@ -30,7 +30,7 @@ steps:
 - task: VSBuild@1
   inputs:
     solution: '**/Kastra.Business.csproj'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:SkipInvalidConfigurations=true /p:GeneratePackageOnBuild=true /p:PackageLocation="$(build.artifactStagingDirectory)" /p:VersionSuffix="$(Build.BuildNumber) /p:VersionSuffix="$(Build.BuildNumber)"'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:SkipInvalidConfigurations=true /p:GeneratePackageOnBuild=true /p:PackageLocation="$(build.artifactStagingDirectory)" /p:VersionSuffix="$(Build.BuildNumber)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
