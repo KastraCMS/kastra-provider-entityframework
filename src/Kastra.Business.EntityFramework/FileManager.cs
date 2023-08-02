@@ -75,7 +75,10 @@ namespace Kastra.Business
             }
             catch (Exception)
             {
-                File.Delete(filePath);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
 
                 throw;
             }
